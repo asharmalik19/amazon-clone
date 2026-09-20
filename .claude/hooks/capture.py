@@ -30,6 +30,7 @@ import json
 import os
 import re
 import sys
+import time
 
 MARKER = "<!-- ENTRIES BELOW ARE APPEND-ONLY -->"
 
@@ -94,24 +95,31 @@ def model_from_transcript(entries):
     return None
 
 
-def final_assistant_text(entries):
-    """Reconstruct the trailing text run of the turn from the transcript.
+def final_assistant_run(entries):
+    """Trailing text run of the turn, and the model that produced it.
 
     Each content block lands on its own transcript line, so we walk backwards
     collecting `text` blocks and stop at the first thing that marks the end of
     the final run: a tool_use, a tool_result, or a user prompt. `thinking`
     blocks are skipped -- they are deliberately not part of the log.
 
-    Used as a fallback, and to catch turns whose final response spans several
-    text blocks (where `last_assistant_message` only holds the last one).
+    Text and model are read from the *same* run so they cannot disagree. Taking
+    the model from "latest assistant message anywhere in the transcript"
+    instead would return the previous turn's model whenever the current turn
+    has not been flushed to disk yet.
+
+    Returns (text, model), either of which may be empty/None.
     """
     chunks = []
+    model = None
     for d in reversed(entries):
         kind = d.get("type")
         if kind == "assistant":
-            content = (d.get("message") or {}).get("content")
+            msg = d.get("message") or {}
+            content = msg.get("content")
             if isinstance(content, str):
                 chunks.append(content)
+                model = msg.get("model") or model
                 continue
             if not isinstance(content, list):
                 continue
@@ -127,11 +135,36 @@ def final_assistant_text(entries):
                 break
             if parts:
                 chunks.append("\n".join(parts))
+                model = msg.get("model") or model
         elif kind == "user":
             # Either a tool result or a real prompt -- both end the final run.
             break
     chunks.reverse()
-    return "\n\n".join(c for c in chunks if c.strip()).strip()
+    return "\n\n".join(c for c in chunks if c.strip()).strip(), model
+
+
+def resolve_final(transcript_path, expected_tail, deadline=4.0, interval=0.15):
+    """Wait for the turn to reach the transcript, then read text and model.
+
+    The Stop hook fires before Claude Code has finished writing the turn to
+    the session .jsonl. Reading immediately gave a correct-looking response
+    (via the last_assistant_message fallback) with `model: unknown` next to
+    it. So poll until the trailing run is present, carries a model, and
+    matches the tail of last_assistant_message -- that last check is what
+    proves we are looking at *this* turn rather than the previous one.
+
+    Bounded, and the Stop hook runs after the response is already on screen,
+    so the wait is never user-visible.
+    """
+    waited = 0.0
+    text, model = final_assistant_run(read_transcript(transcript_path))
+    while waited < deadline:
+        if text and model and (not expected_tail or expected_tail in text):
+            break
+        time.sleep(interval)
+        waited += interval
+        text, model = final_assistant_run(read_transcript(transcript_path))
+    return text, model
 
 
 def log_path(session_id):
@@ -267,12 +300,15 @@ def main():
         num = n_prompts
         if "[LOG_ENTRY type=RESPONSE num=%d " % num in body:
             return  # Stop can fire more than once per turn; don't double-write
-        text = final_assistant_text(transcript)
+        reported = (payload.get("last_assistant_message") or "").strip()
+        text, model = resolve_final(
+            payload.get("transcript_path"), reported[-60:] if reported else ""
+        )
         if not text:
-            text = (payload.get("last_assistant_message") or "").strip()
+            text = reported
         if not text:
             text = "(no final text response for this turn)"
-        model = model_from_transcript(transcript) or "unknown"
+        model = model or "unknown"
         body += format_entry("RESPONSE", num, short, now, model, text)
         last_time = None
 
