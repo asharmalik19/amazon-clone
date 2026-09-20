@@ -251,16 +251,14 @@ def main():
         if not text or not text.strip():
             return
         num = n_prompts + 1
-        # The model that will serve this turn is not knowable yet, so we record
-        # the last one that actually served a request. A mid-session switch
-        # shows up on the RESPONSE entry immediately and on PROMPT entries from
-        # the next turn on.
-        model = (
-            os.environ.get("CLAUDE_MODEL_ID")
-            or os.environ.get("CLAUDE_MODEL")
-            or model_from_transcript(transcript)
-            or "unknown-at-prompt-time"
-        )
+        # The model that will serve this turn is not knowable yet. The
+        # UserPromptSubmit payload has no model field, and a dump of the hook
+        # environment showed no model variable either (CLAUDE_CODE_SESSION_ID,
+        # CLAUDE_PROJECT_DIR, CLAUDE_EFFORT are there; nothing for the model).
+        # So we record the last model that actually served a request. A
+        # mid-session switch shows up on the RESPONSE entry immediately, and on
+        # PROMPT entries from the next turn onward.
+        model = model_from_transcript(transcript) or "unknown-at-prompt-time"
         body += format_entry("PROMPT", num, short, now, model, text.rstrip())
         last_time = now
     else:

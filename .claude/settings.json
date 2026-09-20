@@ -1,7 +1,4 @@
 {
-  "env": {
-    "CAPTURE_DEBUG_DIR": "/private/tmp/claude-501/-Users-ashar-python-codes-8x-assignement/capture-debug"
-  },
   "hooks": {
     "UserPromptSubmit": [
       {
