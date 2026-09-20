@@ -1,0 +1,6 @@
+# NOTE: .agent-logs/ is deliberately NOT ignored -- the capture log ships with
+# the repo as part of the submission.
+__pycache__/
+*.pyc
+.DS_Store
+.claude/settings.local.json
