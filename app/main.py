@@ -33,7 +33,17 @@ async def lifespan(_: FastAPI):
     engine = get_engine()
     with engine.connect() as connection:
         connection.execute(text("SELECT 1"))
-    logger.info("database reachable via %s", engine.dialect.name)
+    # Say where the URL came from, not just which backend won. "sqlite" alone cannot
+    # distinguish "DATABASE_URL is missing" from "DATABASE_URL points at SQLite", which
+    # is exactly the question to ask when a deploy looks wrong. The URL itself is never
+    # logged -- it carries the database password.
+    source = "DATABASE_URL" if settings.database_url_from_env else "the local default"
+    logger.info("database reachable via %s, configured from %s", engine.dialect.name, source)
+    if not settings.database_url_from_env and settings.is_production:
+        logger.warning(
+            "DATABASE_URL is not set: running on a container-local SQLite file that this "
+            "platform wipes on restart. Anything stored here will be lost."
+        )
     yield
     engine.dispose()
 

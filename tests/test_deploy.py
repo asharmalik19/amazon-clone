@@ -9,7 +9,13 @@ from pathlib import Path
 
 import pytest
 
-from app.config import DEV_DATABASE_URL, DEV_SECRET_KEY, Settings, normalize_database_url
+from app.config import (
+    DEV_DATABASE_URL,
+    DEV_SECRET_KEY,
+    Settings,
+    get_settings,
+    normalize_database_url,
+)
 from app.db import make_engine
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -48,12 +54,33 @@ def test_engine_for_sqlite_allows_cross_thread_use():
 
 
 def test_production_is_detected_from_the_supplied_secret():
-    dev = Settings(DEV_DATABASE_URL, DEV_SECRET_KEY, 8000, "amazonia")
+    dev = Settings(DEV_DATABASE_URL, DEV_SECRET_KEY, 8000, "amazonia", False)
     deployed = Settings(
-        "postgresql+psycopg://u:p@h/db", "a-real-generated-secret", 10000, "amazonia"
+        "postgresql+psycopg://u:p@h/db", "a-real-generated-secret", 10000, "amazonia", True
     )
     assert not dev.is_production
     assert deployed.is_production
+
+
+def test_a_supplied_database_url_is_recorded_as_coming_from_the_environment(monkeypatch):
+    """The startup log has to distinguish a missing URL from one that names SQLite."""
+    monkeypatch.setenv("DATABASE_URL", "postgres://u:p@host:5432/db")
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert settings.database_url_from_env
+    assert settings.database_url == "postgresql+psycopg://u:p@host:5432/db"
+    get_settings.cache_clear()
+
+
+@pytest.mark.parametrize("blank", ["", "   "])
+def test_a_blank_database_url_falls_back_to_the_local_default(monkeypatch, blank):
+    """A platform env var created but left empty must not produce an unusable URL."""
+    monkeypatch.setenv("DATABASE_URL", blank)
+    get_settings.cache_clear()
+    settings = get_settings()
+    assert settings.database_url == DEV_DATABASE_URL
+    assert not settings.database_url_from_env
+    get_settings.cache_clear()
 
 
 def test_healthz_is_what_the_blueprint_polls():

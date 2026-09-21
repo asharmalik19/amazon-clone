@@ -36,6 +36,8 @@ class Settings:
     port: int
     site_name: str
 
+    database_url_from_env: bool
+
     @property
     def is_production(self) -> bool:
         """True when the secret key was supplied by the environment."""
@@ -45,9 +47,13 @@ class Settings:
 @lru_cache
 def get_settings() -> Settings:
     """Return the process-wide settings, built once."""
+    # An empty string counts as absent: a platform env var that was created but left
+    # blank should fall back to the local default, not produce an unusable URL.
+    raw_database_url = os.getenv("DATABASE_URL", "").strip()
     return Settings(
-        database_url=normalize_database_url(os.getenv("DATABASE_URL", DEV_DATABASE_URL)),
+        database_url=normalize_database_url(raw_database_url or DEV_DATABASE_URL),
         secret_key=os.getenv("SECRET_KEY", DEV_SECRET_KEY),
         port=int(os.getenv("PORT", "8000")),
         site_name=os.getenv("SITE_NAME", "amazonia"),
+        database_url_from_env=bool(raw_database_url),
     )
