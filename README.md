@@ -7,16 +7,17 @@ for scope, [specs/tech-stack.md](specs/tech-stack.md) for how, and
 
 ## Live URL
 
-<!-- Set once the Render blueprint has been applied; see "Deployment" below. -->
-_Not yet published — the blueprint in `render.yaml` is committed but has not been
-applied to a Render account._
+<https://amazonia-a8g7.onrender.com>
+
+Free instance: the first request after 15 minutes of inactivity waits about a
+minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 2 — deployed skeleton.** The app boots and serves the shared page shell,
-in a container, against either SQLite or Postgres. The catalog, search, category
-nav and cart are not built yet, so those header controls are rendered visibly
-inert rather than as controls that do nothing.
+**Phase 2 — deployed skeleton.** The app is live in a container on Render and
+serves the shared page shell, booting against either SQLite or Postgres. The
+catalog, search, category nav and cart are not built yet, so those header
+controls are rendered visibly inert rather than as controls that do nothing.
 
 ## Local setup
 
@@ -71,27 +72,40 @@ on the way in, so a provider's connection string works unedited.
 
 ## Deployment
 
-Hosting is Render, declared as infrastructure in
-[`render.yaml`](render.yaml): one Docker web service plus a managed Postgres
-instance, health-checked at `/healthz`, auto-deploying on every commit to
-`main`. Production must use Postgres — Render's filesystem is ephemeral, so a
-SQLite file would be wiped on each redeploy, taking every signup and cart
-with it.
+Hosting is Render: one Docker web service, health-checked at `/healthz`,
+auto-deploying on every commit to `main`. The intended infrastructure is
+declared in [`render.yaml`](render.yaml) — the web service plus a managed
+Postgres instance — so it is reviewable in the repo rather than living only in
+a dashboard.
 
-To publish it:
+The running service was created by hand in the Render dashboard rather than by
+applying that blueprint, because Render's Blueprint flow requires a payment
+method on file while an individual free web service does not. The blueprint
+stays committed and current: it is what to apply if this ever moves to an
+account with billing enabled.
 
-1. Push this repository to GitHub. The blueprint tracks `main`, so that is
-   the branch the live URL follows.
-2. In Render, choose **New → Blueprint** and point it at the repository. It
-   reads `render.yaml` and creates both the web service and the database;
-   `DATABASE_URL` and `SECRET_KEY` are wired up automatically.
-3. Record the resulting `*.onrender.com` URL in the "Live URL" section above.
+To reproduce the deploy from scratch:
+
+1. Push the repository to GitHub.
+2. In Render, **New → Web Service**, point it at the repository, and pick the
+   `Docker` runtime, the `main` branch, and the `Free` instance type. Leave the
+   build and start commands empty; the `Dockerfile` binds to Render's `$PORT`.
+3. Set the health check path to `/healthz` and `SECRET_KEY` to a generated
+   secret. Set `DATABASE_URL` to a Postgres connection string.
+4. Record the resulting `*.onrender.com` URL under "Live URL" above.
+
+**The live service currently has no `DATABASE_URL`,** so it runs on a SQLite
+file inside the container. That is sound only while nothing is stored: Render's
+filesystem is ephemeral, so the file is wiped on every restart and redeploy.
+Postgres has to be attached before Phase 3 puts real data behind it — the app
+already boots against either backend, so that is a configuration change, not a
+code change.
 
 **Free-tier behaviour, stated plainly:** the free web service spins down
 after 15 minutes of inactivity and takes about a minute to spin back up, so a
 first visit to a cold instance shows a loading page for that long. A free
-Postgres instance also expires 30 days after creation. Keeping the instance
-warm with an external pinger against `/healthz`, or moving to a paid
+Render Postgres instance also expires 30 days after creation. Keeping the
+instance warm with an external pinger against `/healthz`, or moving to a paid
 always-on instance, is the fix.
 
 ## Out of scope
