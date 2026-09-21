@@ -1,0 +1,9 @@
+{
+  "first_prompt_time": "2026-09-21T12:08:40.083Z",
+  "last_response_num": 4,
+  "models": [
+    "claude-opus-5"
+  ],
+  "n_prompts": 4,
+  "prompt_offset": 8060
+}
