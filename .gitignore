@@ -4,3 +4,8 @@ __pycache__/
 *.pyc
 .DS_Store
 .claude/settings.local.json
+.venv/
+app.db
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
