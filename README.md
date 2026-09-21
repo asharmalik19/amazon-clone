@@ -87,11 +87,12 @@ To publish it:
    `DATABASE_URL` and `SECRET_KEY` are wired up automatically.
 3. Record the resulting `*.onrender.com` URL in the "Live URL" section above.
 
-**Free-tier behaviour, stated plainly:** the free web service sleeps after
-about 15 minutes of inactivity and takes roughly 30–50 seconds to wake, so a
-first visit to a cold instance is slow. A free Postgres instance also expires
-after 30 days. Keeping the instance warm with an external pinger against
-`/healthz`, or moving to a paid always-on instance, is the fix.
+**Free-tier behaviour, stated plainly:** the free web service spins down
+after 15 minutes of inactivity and takes about a minute to spin back up, so a
+first visit to a cold instance shows a loading page for that long. A free
+Postgres instance also expires 30 days after creation. Keeping the instance
+warm with an external pinger against `/healthz`, or moving to a paid
+always-on instance, is the fix.
 
 ## Out of scope
 
