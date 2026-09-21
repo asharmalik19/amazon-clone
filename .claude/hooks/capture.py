@@ -34,6 +34,25 @@ import time
 
 MARKER = "<!-- ENTRIES BELOW ARE APPEND-ONLY -->"
 
+# Matches a full three-line entry header, and captures the session short id so
+# entries quoted from *other* sessions inside a captured response cannot be
+# mistaken for this session's own entries. Scanning the body loosely is unsafe:
+# a response that discusses or pastes log entries contains lines that look
+# exactly like headers.
+ENTRY_RE = re.compile(
+    r"^\[LOG_ENTRY type=(PROMPT|RESPONSE) num=(\d+) session=(\S+?)\]\n"
+    r"timestamp: (.+)\n"
+    r"model: (.+)$",
+    re.M,
+)
+
+
+def is_real_model(name):
+    """Claude Code writes `<synthetic>` for locally generated assistant
+    messages -- interrupted turns, superseded prompts, API error notices. It is
+    a marker, not a model, so it must not be reported as the session's model."""
+    return bool(name) and not name.startswith("<") and not name.startswith("unknown")
+
 # capture.py -> hooks -> .claude -> repo root. Derived from __file__ rather
 # than $CLAUDE_PROJECT_DIR so the script works regardless of how it is invoked.
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -86,13 +105,80 @@ def read_transcript(path):
 
 
 def model_from_transcript(entries):
-    """Most recent model that actually served a request in this session."""
+    """Most recent model that actually served a request in this session.
+
+    Skips `<synthetic>` messages so an interrupted or superseded turn does not
+    make the following prompt report `model: <synthetic>`.
+    """
     for d in reversed(entries):
         if d.get("type") == "assistant":
             model = (d.get("message") or {}).get("model")
-            if model:
+            if is_real_model(model):
                 return model
     return None
+
+
+def scan_entries(body, session_short):
+    """Entries already written for this session, parsed from strict headers.
+
+    Bootstrap only. Captured response text can contain lines identical to an
+    entry header -- quoting the log inside a response is enough -- so this is
+    never used for control flow once a state file exists.
+    """
+    found = []
+    for m in ENTRY_RE.finditer(body):
+        if m.group(3) == session_short:
+            found.append(
+                {"type": m.group(1), "num": int(m.group(2)), "model": m.group(5).strip()}
+            )
+    return found
+
+
+def state_path(session_id):
+    return os.path.join(LOGDIR, "state", "%s.json" % session_id)
+
+
+def load_state(session_id, body, short):
+    """Authoritative counters, kept outside the log.
+
+    Deriving these from the log body is unsafe: a captured response that
+    quotes an entry header of this same session would inflate the count, and
+    a quoted RESPONSE header could make a real response look already-written
+    and be silently dropped. The log is append-only output; this is the input.
+    """
+    try:
+        with open(state_path(session_id), encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        pass
+
+    # No state file: seed from the body once. Safe here because a log written
+    # before this function existed cannot yet contain quoted headers for
+    # entries beyond the ones actually recorded.
+    entries = scan_entries(body, short)
+    prompts = [e["num"] for e in entries if e["type"] == "PROMPT"]
+    responses = [e["num"] for e in entries if e["type"] == "RESPONSE"]
+    models = []
+    for e in entries:
+        if is_real_model(e["model"]) and e["model"] not in models:
+            models.append(e["model"])
+    return {
+        "n_prompts": max(prompts) if prompts else 0,
+        "last_response_num": max(responses) if responses else 0,
+        "models": models,
+    }
+
+
+def save_state(session_id, state):
+    path = state_path(session_id)
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2, sort_keys=True)
+        os.replace(tmp, path)
+    except OSError:
+        pass
 
 
 def final_assistant_run(entries):
@@ -155,16 +241,25 @@ def resolve_final(transcript_path, expected_tail, deadline=4.0, interval=0.15):
 
     Bounded, and the Stop hook runs after the response is already on screen,
     so the wait is never user-visible.
+
+    Returns (text, model, matched). `matched` is False when the poll timed out
+    without the transcript agreeing with last_assistant_message -- in that case
+    the transcript is still showing the *previous* turn, and trusting it would
+    log the wrong response against this prompt.
     """
     waited = 0.0
     text, model = final_assistant_run(read_transcript(transcript_path))
-    while waited < deadline:
-        if text and model and (not expected_tail or expected_tail in text):
-            break
+
+    def agrees():
+        return bool(text) and bool(model) and (
+            not expected_tail or expected_tail in text
+        )
+
+    while waited < deadline and not agrees():
         time.sleep(interval)
         waited += interval
         text, model = final_assistant_run(read_transcript(transcript_path))
-    return text, model
+    return text, model, agrees()
 
 
 def log_path(session_id):
@@ -276,8 +371,8 @@ def main():
     path = log_path(session_id)
     head, body = split_existing(path)
 
-    prompt_nums = re.findall(r"^\[LOG_ENTRY type=PROMPT num=(\d+) ", body, re.M)
-    n_prompts = len(prompt_nums)
+    state = load_state(session_id, body, short)
+    n_prompts = state["n_prompts"]
 
     if mode == "prompt":
         text = payload.get("prompt")
@@ -293,32 +388,32 @@ def main():
         # PROMPT entries from the next turn onward.
         model = model_from_transcript(transcript) or "unknown-at-prompt-time"
         body += format_entry("PROMPT", num, short, now, model, text.rstrip())
+        state["n_prompts"] = num
         last_time = now
     else:
         if n_prompts == 0:
             return  # hook installed mid-turn; nothing to pair a response with
         num = n_prompts
-        if "[LOG_ENTRY type=RESPONSE num=%d " % num in body:
+        if state["last_response_num"] >= num:
             return  # Stop can fire more than once per turn; don't double-write
         reported = (payload.get("last_assistant_message") or "").strip()
-        text, model = resolve_final(
+        text, model, matched = resolve_final(
             payload.get("transcript_path"), reported[-60:] if reported else ""
         )
+        if not matched and reported:
+            # Transcript never caught up. Use what the hook itself reported and
+            # do not borrow the stale transcript's model alongside it.
+            text, model = reported, None
         if not text:
-            text = reported
-        if not text:
-            text = "(no final text response for this turn)"
+            text = reported or "(no final text response for this turn)"
         model = model or "unknown"
         body += format_entry("RESPONSE", num, short, now, model, text)
+        state["last_response_num"] = num
         last_time = None
 
-    # Rebuild the header from the body so the counters stay truthful even if a
-    # previous run died halfway.
-    models = []
-    for m in re.findall(r"^model: (.+)$", body, re.M):
-        m = m.strip()
-        if m and m not in models and not m.startswith("unknown"):
-            models.append(m)
+    if is_real_model(model) and model not in state["models"]:
+        state["models"].append(model)
+    models = state["models"]
 
     first_time = now
     prev_last = now
@@ -336,9 +431,7 @@ def main():
 
     last_time = last_time or prev_last
     date = prev_date or first_time[:10]
-    n_exchanges = len(
-        re.findall(r"^\[LOG_ENTRY type=PROMPT num=(\d+) ", body, re.M)
-    )
+    n_exchanges = state["n_prompts"]
 
     content = (
         build_header(
@@ -350,6 +443,11 @@ def main():
     with open(tmp, "w", encoding="utf-8") as f:
         f.write(content)
     os.replace(tmp, path)
+
+    # Only after the log write succeeded, so a crash re-does the entry rather
+    # than silently skipping it.
+    state["first_prompt_time"] = first_time
+    save_state(session_id, state)
 
 
 if __name__ == "__main__":
