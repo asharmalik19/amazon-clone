@@ -14,10 +14,11 @@ minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 2 — deployed skeleton.** The app is live in a container on Render and
-serves the shared page shell, booting against either SQLite or Postgres. The
-catalog, search, category nav and cart are not built yet, so those header
-controls are rendered visibly inert rather than as controls that do nothing.
+**Phase 2 — deployed skeleton.** The app is live in a container on Render,
+backed by managed Postgres, serving the shared page shell. Every later phase
+reaches the live URL just by being committed to `main`. The catalog, search,
+category nav and cart are not built yet, so those header controls are rendered
+visibly inert rather than as controls that do nothing.
 
 ## Local setup
 
@@ -90,16 +91,18 @@ To reproduce the deploy from scratch:
 2. In Render, **New → Web Service**, point it at the repository, and pick the
    `Docker` runtime, the `main` branch, and the `Free` instance type. Leave the
    build and start commands empty; the `Dockerfile` binds to Render's `$PORT`.
-3. Set the health check path to `/healthz` and `SECRET_KEY` to a generated
-   secret. Set `DATABASE_URL` to a Postgres connection string.
+   Set the health check path to `/healthz` and `SECRET_KEY` to a generated
+   secret.
+3. **New → Postgres** on the `Free` plan, in the same region as the web
+   service — internal connections require a matching account and region. Copy
+   its *internal* connection string into the **web service's** `DATABASE_URL`.
 4. Record the resulting `*.onrender.com` URL under "Live URL" above.
 
-**The live service currently has no `DATABASE_URL`,** so it runs on a SQLite
-file inside the container. That is sound only while nothing is stored: Render's
-filesystem is ephemeral, so the file is wiped on every restart and redeploy.
-Postgres has to be attached before Phase 3 puts real data behind it — the app
-already boots against either backend, so that is a configuration change, not a
-code change.
+The app logs which backend it connected to and whether the URL came from the
+environment, so a misconfigured deploy is one line in the log rather than a
+guess. It refuses to start at all if the database is unreachable: a container
+that cannot reach its database is broken, not slow, and should fail the health
+check immediately instead of serving errors later.
 
 **Free-tier behaviour, stated plainly:** the free web service spins down
 after 15 minutes of inactivity and takes about a minute to spin back up, so a
