@@ -1,0 +1,26 @@
+# Keep the build context to the application and its metadata. Everything below is
+# either local state, developer tooling, or reference material that must not ship.
+.git
+.gitignore
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+
+# Local database file -- production uses Postgres.
+app.db
+
+# Not part of the running app.
+.agent-logs/
+.claude/
+amazon_screenshots/
+specs/
+tests/
+CAPTURE-TEST.md
+requirements.md
+Dockerfile
+.dockerignore
+render.yaml
