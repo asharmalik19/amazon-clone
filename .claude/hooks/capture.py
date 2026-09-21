@@ -134,6 +134,50 @@ def scan_entries(body, session_short):
     return found
 
 
+PROMPT_PLACEHOLDER = "unknown-at-prompt-time"
+
+
+def backfill_prompt_model(body, offset, short, num, model):
+    """Fill in a PROMPT entry's model once the turn has revealed it.
+
+    UserPromptSubmit cannot know which model will serve the turn -- no payload
+    field, no environment variable, and on a session's first prompt nothing has
+    run yet. By Stop it is known, and prompt and response of one turn share it.
+
+    Targeted by the byte offset recorded when the entry was written, so this
+    cannot touch an identical-looking header sitting inside captured response
+    text. Only the placeholder is ever replaced; a real model name is left
+    alone, and no other byte of the entry moves.
+    """
+    if not is_real_model(model):
+        return body, False
+
+    m = ENTRY_RE.match(body, offset) if offset is not None else None
+    if m is None:
+        # Bootstrap path for entries written before offsets were recorded:
+        # take the first placeholder header for this session and number.
+        for cand in ENTRY_RE.finditer(body):
+            if (
+                cand.group(1) == "PROMPT"
+                and cand.group(3) == short
+                and int(cand.group(2)) == num
+                and cand.group(5).strip() == PROMPT_PLACEHOLDER
+            ):
+                m = cand
+                break
+    if m is None or m.group(5).strip() != PROMPT_PLACEHOLDER:
+        return body, False
+
+    header = "[LOG_ENTRY type=%s num=%s session=%s]\ntimestamp: %s\nmodel: %s" % (
+        m.group(1),
+        m.group(2),
+        m.group(3),
+        m.group(4),
+        model,
+    )
+    return body[: m.start()] + header + body[m.end() :], True
+
+
 def state_path(session_id):
     return os.path.join(LOGDIR, "state", "%s.json" % session_id)
 
@@ -386,7 +430,8 @@ def main():
         # So we record the last model that actually served a request. A
         # mid-session switch shows up on the RESPONSE entry immediately, and on
         # PROMPT entries from the next turn onward.
-        model = model_from_transcript(transcript) or "unknown-at-prompt-time"
+        model = model_from_transcript(transcript) or PROMPT_PLACEHOLDER
+        state["prompt_offset"] = len(body)
         body += format_entry("PROMPT", num, short, now, model, text.rstrip())
         state["n_prompts"] = num
         last_time = now
@@ -407,6 +452,9 @@ def main():
         if not text:
             text = reported or "(no final text response for this turn)"
         model = model or "unknown"
+        body, _ = backfill_prompt_model(
+            body, state.get("prompt_offset"), short, num, model
+        )
         body += format_entry("RESPONSE", num, short, now, model, text)
         state["last_response_num"] = num
         last_time = None
