@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "components/product_card.html" import product_card with context %}
+{% from "components/catalog_grid.html" import catalog_grid, catalog_empty with context %}
 
 {% block title %}{{ site_name }} — shop the catalog{% endblock %}
 
@@ -7,27 +7,12 @@
 {% if products %}
 <h1 class="mb-3 text-[21px] font-bold">Today's catalog</h1>
 
-{# Dense on a phone, denser as the viewport grows -- the grid, not the tile, decides how
-   many products a row holds, so the card component stays free of layout assumptions. #}
-<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-  {% for product in products %}
-  <div>{{ product_card(product) }}</div>
-  {% endfor %}
-</div>
+{{ catalog_grid(products) }}
 
 <p class="mt-6 text-center text-neutral-600">
   {{ products | length }} products. Product images are placeholders; see the footer.
 </p>
 {% else %}
-{# Reachable for real: an app booted against a database the seed has not run against
-   yet. Better a sentence that says what is missing than an empty page that looks broken. #}
-<section class="mx-auto max-w-2xl rounded bg-white p-6 shadow-sm">
-  <h1 class="text-2xl font-bold">The catalog is empty</h1>
-  <p class="mt-3 text-neutral-700">
-    No products are in the database yet. Load the committed catalog with
-    <code class="rounded bg-amz-page px-1 py-0.5">python -m seed.seed</code> and reload
-    this page.
-  </p>
-</section>
+{{ catalog_empty() }}
 {% endif %}
 {% endblock %}

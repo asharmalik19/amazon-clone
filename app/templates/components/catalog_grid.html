@@ -1,0 +1,35 @@
+{#
+  The catalog laid out as a grid of cards, plus the notice for a catalog with nothing
+  in it. The landing page and the search results page both render through here, so the
+  two screens cannot drift apart in density, gap or breakpoints -- the same reason the
+  card itself is a single macro.
+
+  The grid decides how many products a row holds, not the tile, so the card component
+  stays free of layout assumptions.
+#}
+{% from "components/product_card.html" import product_card with context %}
+
+{% macro catalog_grid(products) -%}
+<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+  {% for product in products %}
+  <div>{{ product_card(product) }}</div>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+{#
+  Reachable for real: an app booted against a database the seed has not run against
+  yet. Better a sentence that says what is missing than an empty page that looks broken.
+  It is not the same screen as "your search matched nothing" -- one is a broken install,
+  the other is an ordinary answer to a question -- so they are separate states.
+#}
+{% macro catalog_empty() -%}
+<section class="mx-auto max-w-2xl rounded bg-white p-6 shadow-sm">
+  <h1 class="text-2xl font-bold">The catalog is empty</h1>
+  <p class="mt-3 text-neutral-700">
+    No products are in the database yet. Load the committed catalog with
+    <code class="rounded bg-amz-page px-1 py-0.5">python -m seed.seed</code> and reload
+    this page.
+  </p>
+</section>
+{%- endmacro %}

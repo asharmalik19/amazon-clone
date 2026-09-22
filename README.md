@@ -14,24 +14,33 @@ minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 5 — the product detail page.** Every tile on the landing page now opens
-a full detail page at `/product/{slug}`: image gallery, title, price, rating and
-count, description, and the "About this item" bullets. The gallery's thumbnails
-are ordinary links that set `?image=N`, so switching images works with
-JavaScript disabled and every view has its own shareable URL; a bogus `?image=`
-shows the product's first image rather than an error. An unknown slug gets a
-styled 404 that offers the catalog instead of a dead end.
+**Phase 6 — search.** The header search box works on every page. `/search?q=…`
+matches case-insensitively across a product's title, description, key-info
+bullets and the name of its category, and every word of the query has to land
+somewhere on the product for it to be a result — so "fire stick" finds the two
+Fire TV Sticks rather than everything that mentions either word. Partial words
+match too ("avoca" finds the avocado), and results come back in catalog order,
+rendered by the same product card the landing page uses.
 
-The page shows only what the catalog actually knows — no invented stock,
-delivery date or seller. Quantity selection and Add to Cart are Phase 8, so the
-buy box says so plainly, and the search, category, cart and account controls in
-the header stay visibly inert until the phase that implements each one lands.
+The states around it are real screens: no matches shows what was searched for
+and offers the catalog, an empty query is treated as a question nobody asked and
+shows everything, and the box keeps the query after the page reloads so a
+refined search is an edit rather than a retype. Wildcards a shopper types are
+searched for literally — `%` finds the products that say "100%", not all of
+them.
 
-Behind it: all 51 products in a responsive grid, rendered by the single product
-card component that every later screen reuses, with prices formatted from
-integer cents and partial ratings drawn as partial stars. The app is live in a
-container on Render backed by managed Postgres, so every phase reaches the live
-URL just by being committed to `main`.
+Before it: every tile opens a full detail page at `/product/{slug}` with an
+image gallery addressed by `?image=N` (so it works with JavaScript off and every
+view has its own URL), the title, price, rating and count, description and the
+"About this item" bullets — and nothing the catalog cannot back up, so no
+invented stock, delivery date or seller. An unknown slug gets a styled 404 that
+offers the catalog. All 51 products sit in a responsive grid with prices
+formatted from integer cents and partial ratings drawn as partial stars.
+
+Category browse, the cart and accounts are Phases 7, 8 and 11, so those header
+controls stay visibly inert until the phase that implements each one lands. The
+app is live in a container on Render backed by managed Postgres, so every phase
+reaches the live URL just by being committed to `main`.
 
 ## Local setup
 

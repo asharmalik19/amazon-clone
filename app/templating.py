@@ -16,7 +16,7 @@ templates.env.globals["site_name"] = get_settings().site_name
 # ever shows a control that does nothing. Each flag flips in exactly one phase.
 templates.env.globals["features"] = {
     "product_detail": True,  # Phase 5
-    "search": False,  # Phase 6
+    "search": True,  # Phase 6
     "categories": False,  # Phase 7
     "cart": False,  # Phase 8
     "account": False,  # Phase 11

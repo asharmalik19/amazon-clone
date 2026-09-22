@@ -49,7 +49,10 @@
             {% if features.search %}action="/search" method="get" role="search"{% else %}
             aria-hidden="true" onsubmit="return false"{% endif %}>
         <label for="site-search" class="sr-only">Search {{ site_name }}</label>
+        {#- `search_query` is set by the search route only, so the box holds the words that
+            produced the page a shopper is looking at and is empty everywhere else. #}
         <input id="site-search" name="q" type="search" autocomplete="off"
+               value="{{ search_query | default('', true) }}"
                placeholder="{% if features.search %}Search {{ site_name }}{% else %}Search arrives in a later build{% endif %}"
                {% if not features.search %}disabled{% endif %}
                class="min-w-0 grow bg-white px-3 text-neutral-900 placeholder:text-neutral-500
