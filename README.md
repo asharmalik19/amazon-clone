@@ -14,7 +14,30 @@ minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 11 — accounts.** A stranger can create one from the header: name, email,
+**Phase 12 — the cart and the account are one thing.** Fill a cart as a stranger,
+sign in, and it is still there. Fill one and create an account instead, and it
+survives that too — filling a basket and *then* deciding to register is the
+likeliest order anyone does this in, and a signup that quietly emptied the cart
+it started from would be the worst moment in the app to lose one.
+
+Nothing is doubled either, which is the harder half. A product sitting in both
+carts comes out on one line with the quantities added, not twice at two prices,
+because the merge goes through the same summing an ordinary second add does. A
+merged line may hold more than the ten one add allows — ten in the account plus
+ten in the browser is a shopper who wants twenty — and the picker shows twenty
+rather than quietly clamping it.
+
+Signing in *consumes* the anonymous cart rather than copying it: the row is
+either adopted outright (its `user_id` set, its token cleared, its line order and
+age intact) or emptied into the account's cart and deleted, and the cart cookie
+is dropped on the way in. So a cart is findable by an account or by a cookie,
+never by both, and there is exactly one answer to whose cart a request is looking
+at. Signing out is the deliberate opposite: it ends the session and leaves the
+cart with the account, so the browser goes back to being a stranger's with an
+empty cart — which is the honest thing for a shared machine to show the next
+person, and it is waiting at the next sign-in.
+
+Before it, **Phase 11 — accounts.** A stranger can create one from the header: name, email,
 password, and the password again, because a password typed blind is a password
 worth typing twice. Signing up signs you in, the header stops saying "Hello,
 sign in" and starts saying your name, and Sign out is a button in a real form
@@ -38,10 +61,9 @@ uses — forged, truncated, expired, re-signed with a rotated key, or naming an
 account that no longer exists, every one of them is a signed-out visitor rather
 than an error page or somebody else's session. The window is checked on the
 server, because `Max-Age` is a request to the browser and the browser is the one
-party we cannot make keep it. Signing out ends the session and leaves the
-anonymous cart cookie alone; joining the two is Phase 12.
+party we cannot make keep it.
 
-Before it, **Phase 10 — a cart that is still there tomorrow.** The cart is held by one
+Before that, **Phase 10 — a cart that is still there tomorrow.** The cart is held by one
 signed, httpOnly cookie, and this phase is about that cookie holding up. It
 carries a 30-day lifetime, refreshed by every add, so closing the tab no longer
 throws the cart away and a basket in weekly use never ages out — while a
@@ -58,8 +80,9 @@ signed with a rotated key: every one of them looks exactly like a first visit,
 which is an empty cart and no error page. Reads still write nothing at all — no
 cart row, no cookie — and only an add may bring either into existence.
 
-Before that, **Phase 9 — the cart a shopper can change their mind in.** Picking a quantity on a
-product page adds it to an anonymous cart held by a signed, httpOnly cookie; no
+Before that again, **Phase 9 — the cart a shopper can change their mind in.** Picking a
+quantity on a product page adds it to a cart held, for a stranger, by a signed,
+httpOnly cookie; no
 cookie and no cart row exist until that first add, so browsing leaves no trace.
 `/cart` lists what is in it with per-line totals and a subtotal, and each line
 carries the two controls that make a cart a cart: a quantity picker (`0` deletes)

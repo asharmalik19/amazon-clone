@@ -18,14 +18,20 @@ Three rules the routes share:
 - **Errors are a 400, not a redirect.** The response *is* the form, with the values still
   in it. A redirect would either lose what was typed or need somewhere to stash it.
 
-What is deliberately not here: password reset (there is no mail to send it with), email
-verification, and anything about merging the anonymous cart into the account -- that is
-Phase 12, and until it lands, signing in leaves the cart cookie exactly as it found it.
+Signing in and signing up both end by folding the cart the shopper was carrying
+anonymously into their account -- that is Phase 12, and `app.cart.merge_anonymous_cart`
+holds all of it, because "whose cart is this?" is a question with one answer and it does
+not live in a route. Signing out clears the session and deliberately leaves the
+account's cart where it is -- with the account.
+
+What is deliberately not here: password reset (there is no mail to send it with) and
+email verification.
 """
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse, Response
 
+from app.cart import clear_cart_cookie, merge_anonymous_cart
 from app.db import DbSession
 from app.nav import shell
 from app.security import (
@@ -128,13 +134,19 @@ async def signup(
         )
 
     user = create_user(db, name=values["name"], email=normalized, password=password)
+    # A brand-new account merges too. Filling a cart and *then* creating an account is the
+    # likeliest order a stranger does this in, and a signup that quietly emptied the cart
+    # it was started from would be the worst moment in the app to lose one.
+    merge_anonymous_cart(db, request, user)
     # The dependency never commits, so the write is committed here, where it is visible.
     db.commit()
 
     response = RedirectResponse(LANDING, status_code=303)
-    # Only after the commit: a cookie naming a user row that was never written would sign
-    # somebody in as nobody.
+    # Both cookies only after the commit: a session naming a user row that was never
+    # written would sign somebody in as nobody, and dropping the cart cookie before the
+    # merge was durable would throw away the key to a cart that had not moved.
     issue_session(response, user)
+    clear_cart_cookie(response)
     return response
 
 
@@ -177,8 +189,17 @@ async def signin(
             status_code=400,
         )
 
+    # The cart the shopper was carrying as a stranger becomes the account's, summed onto
+    # whatever the account already held. See `merge_anonymous_cart` for the three cases.
+    merge_anonymous_cart(db, request, user)
+    db.commit()
+
     response = RedirectResponse(LANDING, status_code=303)
     issue_session(response, user)
+    # The anonymous token has been consumed -- it now names either nothing or a row this
+    # account owns under a cleared token -- so the cookie goes rather than lingering as a
+    # second answer to whose cart this is.
+    clear_cart_cookie(response)
     return response
 
 
@@ -196,7 +217,8 @@ async def signout(request: Request, db: DbSession):
     """
     response = RedirectResponse(LANDING, status_code=303)
     clear_session(response)
-    # The cart cookie is deliberately left alone. It is the anonymous cart's key, not the
-    # account's, and dropping it would throw away a basket that signing out never touched.
-    # Phase 12 is where the two become one question.
+    # The cart is not touched, and that is the point: it belongs to the account now, so it
+    # stays there, waiting for the next sign-in rather than following the browser. The
+    # shopper who signs out is a stranger again, with an empty cart -- which is the honest
+    # thing for a shared machine to show the next person.
     return response

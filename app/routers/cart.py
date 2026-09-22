@@ -5,10 +5,12 @@ Four routes, and the split between them is the point.
 `GET /cart` is a read, so it never creates a cart or sets a cookie -- a shopper who
 clicks the header link before adding anything sees the empty state and leaves no trace.
 
-`POST /cart/add` is the only write that may bring a cart into existence, so it is the
-only place a `Cart` row and a cookie are written -- created on the first add, and
+`POST /cart/add` is the only write here that may bring a cart into existence, so it is
+the only place a `Cart` row and a cookie are written -- created on the first add, and
 re-sent by every add after it so the cart's expiry follows the shopper's use of it
-rather than the day they started. `POST /cart/update` and
+rather than the day they started. For a signed-in shopper there is no cookie to re-send:
+the cart it creates belongs to their account, and `app.cart` is what decides which of
+the two a request gets. `POST /cart/update` and
 `POST /cart/remove` edit a cart that already exists and never create one: an edit to a
 cart nobody has is an edit to nothing, and answering it by creating an empty cart would
 fill the table with rows for requests that changed nothing.
@@ -144,12 +146,17 @@ async def add(
         # refreshes the cart page afterwards is not re-posting the add.
         response = RedirectResponse("/cart", status_code=303)
 
-    # Every add sets the cookie, not only the one that created the cart: re-sending it
-    # pushes its expiry out, so a cart someone keeps using never quietly ages out while
-    # a forgotten one still does. Only now, after the commit -- a cookie naming a cart
-    # that was never written would send the shopper back with a token resolving to
-    # nothing.
-    set_cart_cookie(response, token)
+    # Every anonymous add sets the cookie, not only the one that created the cart:
+    # re-sending it pushes its expiry out, so a cart someone keeps using never quietly
+    # ages out while a forgotten one still does. Only now, after the commit -- a cookie
+    # naming a cart that was never written would send the shopper back with a token
+    # resolving to nothing.
+    #
+    # A signed-in shopper gets no token and no cookie: their cart is found by their
+    # account, so a cart cookie would be a second, competing answer to whose cart this
+    # is -- exactly the ambiguity Phase 12's merge exists to remove.
+    if token is not None:
+        set_cart_cookie(response, token)
     return response
 
 
