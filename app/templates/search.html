@@ -1,43 +1,89 @@
 {% extends "base.html" %}
 {% from "components/catalog_grid.html" import catalog_grid, catalog_empty with context %}
+{% from "components/category_filter.html" import category_filter with context %}
 
 {% block title %}
-  {%- if query %}{{ query | truncate(60) }} — {{ site_name }}{% else %}{{ site_name }} — shop the catalog{% endif -%}
+  {%- if query %}{{ query | truncate(60) }}
+    {%- if search_category %} in {{ search_category.name }}{% endif %} — {{ site_name }}
+  {%- else %}{{ site_name }} — shop the catalog{% endif -%}
 {% endblock %}
 
 {% block content %}
-{# Three states, all of them real screens: a question with answers, a question with no
-   answers, and no question at all. The query is echoed back so a shopper can see what
-   was actually searched for -- Jinja escapes it, so a query of "<script>" is text on
-   the page and nothing else. #}
-{% if not products and not query %}
+{# `in {{ category }}` is appended to every heading rather than being a separate set of
+   them, because the filter is a narrowing of the same search, not a different screen.
+   The query is echoed back so a shopper can see what was actually searched for -- Jinja
+   escapes it, so a query of "<script>" is text on the page and nothing else. #}
+{% set in_category %}{% if search_category %} in {{ search_category.name }}{% endif %}{% endset %}
+
+{% if unknown_filter %}
+{# A stale bookmark or a hand-edited URL naming a shelf that is not there. The search
+   still answered; the note is what stops the results from silently being wider than the
+   URL asked for. The bad slug is not echoed -- it is attacker-supplied text with nothing
+   useful to say about it. #}
+<p class="mb-3 rounded border border-amber-300 bg-amber-50 p-3 text-neutral-800">
+  That category filter does not match any category we have, so this searches the whole
+  catalog.
+</p>
+{% endif %}
+
+{% if not products and not query and not search_category %}
 {{ catalog_empty() }}
 
 {% elif not query %}
-<h1 class="text-[21px] font-bold">Today's catalog</h1>
+{# The box was submitted empty. A question nobody asked is not an error: it is the
+   catalog, or the one shelf the box was scoped to. #}
+<div class="flex flex-wrap items-baseline justify-between gap-2">
+  <h1 class="text-[21px] font-bold">
+    {% if search_category %}Everything in {{ search_category.name }}{% else %}Today's catalog{% endif %}
+  </h1>
+  {% if search_category %}
+  <a href="/" class="text-amz-link hover:text-amz-cta-hover hover:underline">
+    Back to the full catalog
+  </a>
+  {% endif %}
+</div>
 <p class="mt-1 text-neutral-600">
-  No search term, so this is everything. Type a product, a category or a word from a
-  description into the search bar above to narrow it down.
+  No search term, so this is everything{{ in_category }}. Type a product, a category or a
+  word from a description into the search bar above to narrow it down.
 </p>
 
 <div class="mt-3">{{ catalog_grid(products) }}</div>
 
 {% elif products %}
-<h1 class="text-[21px] font-bold">Results for &ldquo;{{ query }}&rdquo;</h1>
+<h1 class="text-[21px] font-bold">Results for &ldquo;{{ query }}&rdquo;{{ in_category }}</h1>
 <p class="mt-1 text-neutral-600">
   {{ products | length }} {{ "product" if products | length == 1 else "products" }} matched.
   <a href="/" class="text-amz-link hover:text-amz-cta-hover hover:underline">Back to the full catalog</a>
 </p>
 
+{{ category_filter(categories, match_counts, search_category.slug if search_category else none, query) }}
+
 <div class="mt-3">{{ catalog_grid(products) }}</div>
 
 {% else %}
-{# The empty state says what was searched for, why nothing came back, and offers the
-   way out. A search that returns nothing is an answer, not an error. #}
+{# The empty state says what was searched for, why nothing came back, and offers the way
+   out. A search that returns nothing is an answer, not an error. When a filter is what
+   emptied it, the filter is named and the same search across the whole catalog is one
+   click away -- that is the difference between a dead end and a wrong turn. #}
 <section class="mx-auto max-w-2xl rounded bg-white p-6 shadow-sm">
-  <h1 class="text-2xl font-bold">No results for &ldquo;{{ query }}&rdquo;</h1>
+  <h1 class="text-2xl font-bold">No results for &ldquo;{{ query }}&rdquo;{{ in_category }}</h1>
+  {% if search_category and match_counts %}
+  {% set elsewhere = match_counts.values() | sum %}
   <p class="mt-3 text-neutral-700">
-    Nothing in the catalog matches every word of that. Check the spelling, try fewer
+    Nothing on that shelf matches every word of it &mdash; but
+    {% if elsewhere == 1 %}one product elsewhere in the catalog does.
+    {%- else %}{{ elsewhere }} products elsewhere in the catalog do.{% endif %}
+  </p>
+  <p class="mt-5">
+    <a href="/search?q={{ query | urlencode }}"
+       class="inline-block rounded bg-amz-cta px-6 py-2 font-medium text-neutral-900
+              hover:bg-amz-cta-hover">
+      Search all categories instead
+    </a>
+  </p>
+  {% else %}
+  <p class="mt-3 text-neutral-700">
+    Nothing{{ in_category }} matches every word of that. Check the spelling, try fewer
     words, or use a more general one &mdash; searching for
     <em>headphones</em> finds more than <em>wireless noise cancelling headphones</em>.
   </p>
@@ -47,6 +93,11 @@
       Browse the full catalog
     </a>
   </p>
+  {% endif %}
 </section>
+
+{% if search_category %}
+{{ category_filter(categories, match_counts, search_category.slug, query) }}
+{% endif %}
 {% endif %}
 {% endblock %}

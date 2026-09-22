@@ -1,18 +1,22 @@
-"""The landing page and search: the catalog as a grid of product cards.
+"""The catalog listings: the landing page, search, and category browse.
 
-Both screens read the catalog through the query builder below and render through the
-same card component, so a product looks and behaves the same whether a shopper found it
-by scrolling or by asking for it. Category browse joins them in Phase 7.
+All three screens read the catalog through the query builder below and render through
+the same card component, so a product looks and behaves the same whether a shopper found
+it by scrolling, by asking for it, or by narrowing to one shelf. They are also the same
+query: browsing a category is a catalog listing with a category filter, and searching
+inside a category is that filter with search terms on top, which is why
+`/search?q=...&category=...` composes rather than being a fourth code path.
 """
 
 from collections.abc import Sequence
 
-from fastapi import APIRouter, Query, Request
-from sqlalchemy import Select, Text, cast, or_, select
+from fastapi import APIRouter, HTTPException, Query, Request
+from sqlalchemy import Select, Text, cast, func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.db import DbSession
 from app.models import Category, Product
+from app.nav import NAV_ALL, shell
 from app.templating import templates
 
 router = APIRouter()
@@ -26,7 +30,7 @@ MAX_QUERY_LENGTH = 120
 MAX_QUERY_TERMS = 8
 
 
-def catalog_query() -> Select[tuple[Product]]:
+def catalog_query(category: Category | None = None) -> Select[tuple[Product]]:
     """The base catalog query every product listing starts from.
 
     The eager loads are not an optimisation detail: a card reads `primary_image`, so a
@@ -35,18 +39,30 @@ def catalog_query() -> Select[tuple[Product]]:
     between two requests or two backends. The join to `Category` is here rather than in
     the search filter because the order clause needs it either way, which also means
     search can match on the category name without joining the table twice.
+
+    Passing `category` narrows the listing to one shelf. It filters on the foreign key
+    rather than on the joined slug: the caller has already resolved the slug to a row, so
+    matching the id is both cheaper and immune to a second row ever sharing the name.
     """
-    return (
+    statement = (
         select(Product)
         .join(Product.category)
         .options(selectinload(Product.images), joinedload(Product.category))
         .order_by(Category.position, Product.title)
     )
+    if category is not None:
+        statement = statement.where(Product.category_id == category.id)
+    return statement
 
 
-def list_products(db: Session) -> Sequence[Product]:
+def list_products(db: Session, category: Category | None = None) -> Sequence[Product]:
     """Every product, in catalog order, with everything a card needs already loaded."""
-    return db.scalars(catalog_query()).all()
+    return db.scalars(catalog_query(category)).all()
+
+
+def get_category(db: Session, slug: str) -> Category | None:
+    """One category by its public slug, or `None` if there is no such shelf."""
+    return db.scalars(select(Category).where(Category.slug == slug)).one_or_none()
 
 
 def _contains(term: str) -> str:
@@ -61,29 +77,14 @@ def _contains(term: str) -> str:
     return f"%{escaped}%"
 
 
-def search_products(db: Session, query: str) -> Sequence[Product]:
-    """Products matching every word of `query`, in the same order as the catalog.
+def _matching(statement: Select, query: str) -> Select:
+    """Add one AND condition per search term to any statement that joins both tables.
 
-    Each term has to appear *somewhere* on the product -- title, description, one of the
-    key-info bullets, or the name of its category -- and every term has to match for the
-    product to be a result. AND across terms, OR across fields: that is what makes
-    "fire stick" find the Fire TV Stick while "fire blender" finds nothing, which is the
-    answer a shopper expects from two words rather than the 30 products that mention
-    either one.
-
-    A blank query is not an error and not an empty result: it is a question nobody
-    asked, so it returns the full catalog.
-
-    `ilike` is case-insensitive on both backends -- SQLAlchemy renders it as `ILIKE` on
-    Postgres and as `lower(...) LIKE lower(...)` on SQLite. Substring matching means a
-    partial word hits too ("blend" finds "Blender"), which is worth more on a catalog of
-    this size than a stemmer or a full-text index would be. The trade is that there is
-    no relevance ranking: results come back in catalog order, so the same search always
-    returns the same page in the same sequence.
+    Factored out so the results and the per-category counts under them are the same
+    search by construction, not by two pieces of code agreeing. A count that disagreed
+    with the page it is a filter for would be worse than no count at all.
     """
-    terms = query[:MAX_QUERY_LENGTH].split()[:MAX_QUERY_TERMS]
-    statement = catalog_query()
-    for term in terms:
+    for term in query[:MAX_QUERY_LENGTH].split()[:MAX_QUERY_TERMS]:
         pattern = _contains(term)
         statement = statement.where(
             or_(
@@ -100,13 +101,88 @@ def search_products(db: Session, query: str) -> Sequence[Product]:
                 Category.name.ilike(pattern, escape="\\"),
             )
         )
-    return db.scalars(statement).all()
+    return statement
+
+
+def search_products(
+    db: Session, query: str, category: Category | None = None
+) -> Sequence[Product]:
+    """Products matching every word of `query`, in the same order as the catalog.
+
+    Each term has to appear *somewhere* on the product -- title, description, one of the
+    key-info bullets, or the name of its category -- and every term has to match for the
+    product to be a result. AND across terms, OR across fields: that is what makes
+    "fire stick" find the Fire TV Stick while "fire blender" finds nothing, which is the
+    answer a shopper expects from two words rather than the 30 products that mention
+    either one.
+
+    `category`, when given, is one more condition of the same AND: the results are the
+    intersection of "matches these words" and "sits on this shelf". A blank query with a
+    category is therefore the category page's list, which is what makes the header search
+    box safe to leave scoped while a shopper clears it.
+
+    A blank query is not an error and not an empty result: it is a question nobody
+    asked, so it returns the full catalog.
+
+    `ilike` is case-insensitive on both backends -- SQLAlchemy renders it as `ILIKE` on
+    Postgres and as `lower(...) LIKE lower(...)` on SQLite. Substring matching means a
+    partial word hits too ("blend" finds "Blender"), which is worth more on a catalog of
+    this size than a stemmer or a full-text index would be. The trade is that there is
+    no relevance ranking: results come back in catalog order, so the same search always
+    returns the same page in the same sequence.
+    """
+    return db.scalars(_matching(catalog_query(category), query)).all()
+
+
+def search_counts_by_category(db: Session, query: str) -> dict[str, int]:
+    """How many products `query` matches on each shelf, keyed by category slug.
+
+    One grouped query rather than one query per category: the refine row is drawn on
+    every search, and six extra round trips to render six links is a bill that grows
+    with the nav. Shelves with no match are absent from the mapping rather than present
+    as zero, which is what lets the template offer only the filters that lead somewhere.
+    """
+    statement = _matching(
+        select(Category.slug, func.count(Product.id))
+        .join(Product, Product.category_id == Category.id)
+        .group_by(Category.slug),
+        query,
+    )
+    return dict(db.execute(statement).all())
 
 
 @router.get("/")
 async def home(request: Request, db: DbSession):
     """The storefront's front door."""
-    return templates.TemplateResponse(request, "home.html", {"products": list_products(db)})
+    return templates.TemplateResponse(
+        request,
+        "home.html",
+        {"products": list_products(db)} | shell(db, nav_active=NAV_ALL),
+    )
+
+
+@router.get("/category/{slug}")
+async def category_page(request: Request, db: DbSession, slug: str):
+    """One shelf of the catalog, rendered as the same grid of the same cards."""
+    category = get_category(db, slug)
+    if category is None:
+        # Same treatment as an unknown product slug, and for the same reason: a stale or
+        # mistyped link should land a shopper on the site with a way back to the catalog,
+        # not on a JSON error body. The slug is not echoed -- it is attacker-supplied
+        # text, and there is nothing useful to say about it beyond that it is not a shelf.
+        raise HTTPException(status_code=404, detail="We could not find that category.")
+
+    return templates.TemplateResponse(
+        request,
+        "category.html",
+        {
+            "category": category,
+            "products": list_products(db, category),
+        }
+        # The search box is scoped to this shelf while a shopper is standing in front of
+        # it, so typing into it searches here rather than starting over.
+        | shell(db, nav_active=category.slug, search_category=category),
+    )
 
 
 @router.get("/search")
@@ -117,9 +193,19 @@ async def search(
     # shows the catalog, not a 422. A shopper who submits the header form with an empty
     # box gets exactly that.
     q: str = Query("", description="What to search the catalog for."),
+    category: str = Query("", description="Slug of the one category to search inside."),
 ):
-    """Search results, rendered with the same card component as the landing page."""
+    """Search results, optionally narrowed to one category."""
     query = q.strip()
+    slug = category.strip()
+    shelf = get_category(db, slug) if slug else None
+    # A filter naming a category that does not exist is a bad URL, not a failed search:
+    # a bookmark kept past a catalog reshuffle, or a hand-edited query string. The search
+    # still answers, across the whole catalog, and the page says so -- the same call
+    # product detail makes for an out-of-range `?image=`. Dropping the filter can only
+    # widen the results, never point them at the wrong shelf.
+    unknown_filter = bool(slug) and shelf is None
+
     return templates.TemplateResponse(
         request,
         "search.html",
@@ -129,6 +215,13 @@ async def search(
             # searched for after the page reloads -- a shopper refining a search edits
             # their words instead of retyping them.
             "search_query": query,
-            "products": search_products(db, query),
-        },
+            "unknown_filter": unknown_filter,
+            "products": search_products(db, query, shelf),
+            # Drives the refine-by-category row under the heading. A count per shelf is
+            # what makes the row worth showing: it is the difference between offering six
+            # filters and offering the two that have anything behind them, so a shopper
+            # never clicks through to an empty page.
+            "match_counts": search_counts_by_category(db, query),
+        }
+        | shell(db, nav_active=shelf.slug if shelf else None, search_category=shelf),
     )

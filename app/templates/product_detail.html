@@ -17,9 +17,11 @@
   <!-- The product itself -->
   <div class="lg:col-span-4">
     <p class="text-neutral-600">
-      {# Category browsing is Phase 7. Until it exists this says where the product sits
-         without offering a link that would 404. #}
-      in {{ product.category.name }}
+      {# Where the product sits, and the way to its neighbours. Amazon puts a breadcrumb
+         here for the same reason: a shopper who has decided this is not the one still
+         wants the shelf it came off, not the whole catalog. #}
+      in <a href="/category/{{ product.category.slug }}"
+            class="text-amz-link hover:text-amz-cta-hover hover:underline">{{ product.category.name }}</a>
     </p>
 
     <h1 class="mt-1 text-[24px] font-normal leading-8">{{ product.title }}</h1>

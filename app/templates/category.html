@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "components/catalog_grid.html" import catalog_grid with context %}
+
+{% block title %}{{ category.name }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+{# One shelf of the catalog. Deliberately the same grid of the same cards as the landing
+   page and the search results: narrowing to a category changes which products are on
+   screen, not how a product looks or what it does. #}
+{% if products %}
+<div class="flex flex-wrap items-baseline justify-between gap-2">
+  <h1 class="text-[21px] font-bold">{{ category.name }}</h1>
+  <a href="/" class="text-amz-link hover:text-amz-cta-hover hover:underline">
+    Back to the full catalog
+  </a>
+</div>
+<p class="mt-1 text-neutral-600">
+  {{ products | length }} {{ "product" if products | length == 1 else "products" }}.
+  The search box above is set to this category, so a search from here stays on this shelf.
+</p>
+
+<div class="mt-3">{{ catalog_grid(products) }}</div>
+
+{% else %}
+{# A real category with nothing on it. It cannot happen with the committed catalog -- the
+   seed tests refuse an empty shelf -- but a shelf emptied by a later edit to the data is
+   not a 404: the category exists, it is just bare. Saying so is better than pretending
+   the URL was wrong. #}
+<section class="mx-auto max-w-2xl rounded bg-white p-6 shadow-sm">
+  <h1 class="text-2xl font-bold">Nothing in {{ category.name }} yet</h1>
+  <p class="mt-3 text-neutral-700">
+    This category has no products in it at the moment. The other categories in the bar
+    above do.
+  </p>
+  <p class="mt-5">
+    <a href="/" class="inline-block rounded bg-amz-cta px-6 py-2 font-medium text-neutral-900
+                       hover:bg-amz-cta-hover">
+      Browse the full catalog
+    </a>
+  </p>
+</section>
+{% endif %}
+{% endblock %}

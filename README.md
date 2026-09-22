@@ -14,33 +14,46 @@ minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 6 — search.** The header search box works on every page. `/search?q=…`
-matches case-insensitively across a product's title, description, key-info
-bullets and the name of its category, and every word of the query has to land
-somewhere on the product for it to be a result — so "fire stick" finds the two
-Fire TV Sticks rather than everything that mentions either word. Partial words
-match too ("avoca" finds the avocado), and results come back in catalog order,
-rendered by the same product card the landing page uses.
+**Phase 7 — category browse and filter.** The category bar under the header is
+drawn from the database, so it lists every shelf the catalog actually has and
+nothing it does not. `/category/{slug}` shows one shelf in the same grid of the
+same cards as the landing page, the bar marks where the shopper currently is,
+and each product's detail page links back to the shelf it came off.
 
-The states around it are real screens: no matches shows what was searched for
-and offers the catalog, an empty query is treated as a question nobody asked and
-shows everything, and the box keeps the query after the page reloads so a
-refined search is an edit rather than a retype. Wildcards a shopper types are
-searched for literally — `%` finds the products that say "100%", not all of
-them.
+Browse and search compose rather than competing: `/search?q=…&category=…` is the
+intersection of the two, so a shopper can narrow to Books and then search inside
+it. Standing on a shelf scopes the header search box to it — visibly, with the
+category named in the box, because a search that is quietly narrowed is a search
+that lies about its results — and a "Refine by category" row under any results
+offers the shelves that query actually hit, with a count each, so no filter leads
+to an empty page. "All categories" is always one click away.
 
-Before it: every tile opens a full detail page at `/product/{slug}` with an
-image gallery addressed by `?image=N` (so it works with JavaScript off and every
-view has its own URL), the title, price, rating and count, description and the
-"About this item" bullets — and nothing the catalog cannot back up, so no
-invented stock, delivery date or seller. An unknown slug gets a styled 404 that
-offers the catalog. All 51 products sit in a responsive grid with prices
+The states are real screens: an unknown category slug is a styled 404, a filter
+that empties the results says which shelf it searched and how many matches are
+waiting elsewhere, and a filter naming a category that no longer exists answers
+across the whole catalog and says so rather than failing validation.
+
+Before it: the header search box works on every page. `/search?q=…` matches
+case-insensitively across a product's title, description, key-info bullets and
+the name of its category, and every word of the query has to land somewhere on
+the product for it to be a result — so "fire stick" finds the two Fire TV Sticks
+rather than everything that mentions either word. Partial words match too
+("avoca" finds the avocado), results come back in catalog order, no matches
+shows what was searched for, an empty query shows everything, and wildcards a
+shopper types are searched for literally — `%` finds the products that say
+"100%", not all of them.
+
+Every tile opens a full detail page at `/product/{slug}` with an image gallery
+addressed by `?image=N` (so it works with JavaScript off and every view has its
+own URL), the title, price, rating and count, description and the "About this
+item" bullets — and nothing the catalog cannot back up, so no invented stock,
+delivery date or seller. All 51 products sit in a responsive grid with prices
 formatted from integer cents and partial ratings drawn as partial stars.
 
-Category browse, the cart and accounts are Phases 7, 8 and 11, so those header
-controls stay visibly inert until the phase that implements each one lands. The
-app is live in a container on Render backed by managed Postgres, so every phase
-reaches the live URL just by being committed to `main`.
+The cart and accounts are Phases 8 and 11, so those header controls stay visibly
+inert until the phase that implements each one lands. The app is live in a
+container on Render backed by managed Postgres, so every phase reaches the live
+URL just by being committed to `main`.
 
 ## Local setup
 

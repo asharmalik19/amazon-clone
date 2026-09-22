@@ -22,12 +22,13 @@ def test_home_has_the_header_shell(client):
 def test_unbuilt_header_controls_are_inert(client):
     """Nothing on screen may look live before its phase lands.
 
-    Search left this list in Phase 6, which is the point of the list: a control becomes
-    live in exactly one phase, and until then it is visibly inert rather than absent.
+    Search left this list in Phase 6 and the category bar in Phase 7, which is the point
+    of the list: a control becomes live in exactly one phase, and until then it is
+    visibly inert rather than absent.
     """
     body = client.get("/").text
     assert 'href="/cart"' not in body
-    assert "Category browsing arrives in a later build" in body
+    assert "Category browsing arrives in a later build" not in body
     assert "The cart arrives in a later build" in body
     assert "Accounts arrive in a later build" in body
 

@@ -1,0 +1,37 @@
+{#
+  The category bar under the utility header: the whole catalog broken into its shelves,
+  on every page that lists products. It is the only navigation the storefront has, so it
+  is drawn from the database rather than hard-coded -- a category added to the seed file
+  appears here, and one dropped from it stops being a link that 404s.
+
+  A page that does not pass `categories` gets no bar at all (see base.html). That is the
+  404 page and an unseeded database: neither has shelves worth offering, and an empty
+  grey strip would read as a broken header rather than as an absent one.
+#}
+
+{#
+  `aria-current="true"` rather than `"page"` on purpose. The current shelf is marked both
+  on `/category/books` and on `/search?q=...&category=books`, and only the first of those
+  is literally the page the link points at -- "this is the current item in this set" is
+  true of both.
+#}
+{% macro nav_link(href, label, current) -%}
+<a href="{{ href }}" {% if current %}aria-current="true"{% endif %}
+   class="shrink-0 whitespace-nowrap rounded border px-2 py-1 hover:border-white/70
+          {% if current %}border-white/70 bg-amz-nav-hover font-bold{% else %}border-transparent{% endif %}">
+  {{ label }}
+</a>
+{%- endmacro %}
+
+{% macro category_nav(categories, active) -%}
+<nav class="bg-amz-nav text-white" aria-label="Shop by category">
+  <div class="mx-auto flex max-w-[1500px] items-center gap-1 overflow-x-auto px-2 py-1">
+    {#- "All" is a shelf like any other from the shopper's side: it is the way back to
+        the full catalog, and on the landing page it is where they already are. #}
+    {{ nav_link("/", "All", active == nav_all) }}
+    {% for category in categories %}
+    {{ nav_link("/category/" ~ category.slug, category.name, active == category.slug) }}
+    {% endfor %}
+  </div>
+</nav>
+{%- endmacro %}

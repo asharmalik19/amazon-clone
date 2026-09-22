@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.db import DbSession
 from app.models import Product
+from app.nav import shell
 from app.templating import templates
 
 router = APIRouter()
@@ -67,5 +68,10 @@ async def product_detail(
     return templates.TemplateResponse(
         request,
         "product_detail.html",
-        {"product": product, "selected_image": selected},
+        {"product": product, "selected_image": selected}
+        # No nav link is highlighted: a product is not a listing, so no shelf in the bar
+        # is the page being looked at. The breadcrumb above the title is the link to its
+        # category. The search box is scoped to that category all the same -- a shopper
+        # searching from a product page is almost always looking for its neighbours.
+        | shell(db, search_category=product.category),
     )

@@ -1,0 +1,45 @@
+{#
+  The refine-by-category row on the search results page. This is where search and browse
+  compose: every link here is the same query with one shelf attached, so narrowing a
+  search is a plain link and the resulting URL is shareable and bookmarkable.
+
+  Only shelves that actually have a match are offered, with their counts, so the row
+  never sends a shopper to a page that says "no results". The one exception is a filter
+  that is already on and has nothing behind it: that chip stays, because it is the only
+  thing on screen that explains why the page is empty and the only way to switch it off.
+#}
+{% macro category_filter(categories, match_counts, active, query) -%}
+{#- Built with a loop rather than `selectattr` so the chips stay in nav order whichever
+    of the two reasons put a shelf on the row. #}
+{% set shown = [] %}
+{% for category in categories if category.slug in match_counts or category.slug == active %}
+{% set _ = shown.append(category) %}
+{% endfor %}
+{% set total = match_counts.values() | sum %}
+
+{#- With nothing on and only one shelf matching, the row would be a filter that changes
+    nothing next to a filter that is already applied. Drawn only when there is a choice. #}
+{% if shown | length > 1 or active %}
+<div class="mt-3 flex flex-wrap items-center gap-2 rounded bg-white p-3 shadow-sm">
+  <span class="font-bold">Refine by category</span>
+
+  {% macro chip(href, label, current) -%}
+  <a href="{{ href }}" {% if current %}aria-current="true"{% endif %}
+     class="rounded-full border px-3 py-1
+            {% if current %}border-amz-nav bg-amz-nav font-bold text-white
+            {% else %}border-neutral-300 text-amz-link hover:bg-amz-page hover:underline{% endif %}">
+    {{ label }}
+  </a>
+  {%- endmacro %}
+
+  {{ chip("/search?q=" ~ (query | urlencode), "All categories (" ~ total ~ ")", not active) }}
+  {% for category in shown %}
+  {{ chip(
+       "/search?q=" ~ (query | urlencode) ~ "&category=" ~ (category.slug | urlencode),
+       category.name ~ " (" ~ match_counts.get(category.slug, 0) ~ ")",
+       category.slug == active
+     ) }}
+  {% endfor %}
+</div>
+{% endif %}
+{%- endmacro %}

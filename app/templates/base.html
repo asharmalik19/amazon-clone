@@ -1,3 +1,4 @@
+{% from "components/category_nav.html" import category_nav with context -%}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
@@ -48,12 +49,30 @@
       <form class="order-4 flex h-10 w-full min-w-0 grow overflow-hidden rounded sm:order-3 sm:mx-2"
             {% if features.search %}action="/search" method="get" role="search"{% else %}
             aria-hidden="true" onsubmit="return false"{% endif %}>
-        <label for="site-search" class="sr-only">Search {{ site_name }}</label>
+        {%- set scope = search_category | default(none, true) %}
+        <label for="site-search" class="sr-only">
+          {% if scope %}Search in {{ scope.name }}{% else %}Search {{ site_name }}{% endif %}
+        </label>
+        {%- if scope %}
+        {#- The scope is carried in a hidden field and shown in this box, because a search
+            that is quietly narrowed is a search that lies about its results. The box is
+            deliberately static -- not a dropdown that would have to list every shelf to
+            be worth clicking. The way out is on the results page: "All categories". #}
+        <input type="hidden" name="category" value="{{ scope.slug }}">
+        <span class="flex shrink-0 items-center rounded-l bg-neutral-200 px-2 text-neutral-700 sm:px-3">
+          {#- Truncated rather than wrapped or shrunk: the search input is the widest
+              element on the page and stays that way, even next to "Beauty & Personal
+              Care" on a phone. #}
+          <span class="max-w-24 truncate sm:max-w-40">{{ scope.name }}</span>
+        </span>
+        {%- endif %}
         {#- `search_query` is set by the search route only, so the box holds the words that
             produced the page a shopper is looking at and is empty everywhere else. #}
         <input id="site-search" name="q" type="search" autocomplete="off"
                value="{{ search_query | default('', true) }}"
-               placeholder="{% if features.search %}Search {{ site_name }}{% else %}Search arrives in a later build{% endif %}"
+               placeholder="{% if not features.search %}Search arrives in a later build
+                            {%- elif scope %}Search in {{ scope.name }}
+                            {%- else %}Search {{ site_name }}{% endif %}"
                {% if not features.search %}disabled{% endif %}
                class="min-w-0 grow bg-white px-3 text-neutral-900 placeholder:text-neutral-500
                       focus:outline-3 focus:outline-amz-cta disabled:bg-neutral-200
@@ -97,16 +116,17 @@
     </div>
   </div>
 
-  <!-- Category bar -->
+  <!-- Category bar. Data-driven, so it is the same bar on every listing page and there
+       is nothing for an individual template to override. -->
+  {% if features.categories %}
+    {% if categories %}{{ category_nav(categories, nav_active | default(none, true)) }}{% endif %}
+  {% else %}
   <nav class="bg-amz-nav text-white" aria-label="Categories">
     <div class="mx-auto flex max-w-[1500px] items-center gap-1 overflow-x-auto px-2 py-1">
-      {% if features.categories %}
-        {% block category_nav %}{% endblock %}
-      {% else %}
-        <span class="px-2 py-1 text-neutral-400">Category browsing arrives in a later build</span>
-      {% endif %}
+      <span class="px-2 py-1 text-neutral-400">Category browsing arrives in a later build</span>
     </div>
   </nav>
+  {% endif %}
 </header>
 
 <main id="main" class="mx-auto w-full max-w-[1500px] grow px-2 py-4">
