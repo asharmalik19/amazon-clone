@@ -220,8 +220,10 @@ async def search(
             # Drives the refine-by-category row under the heading. A count per shelf is
             # what makes the row worth showing: it is the difference between offering six
             # filters and offering the two that have anything behind them, so a shopper
-            # never clicks through to an empty page.
-            "match_counts": search_counts_by_category(db, query),
+            # never clicks through to an empty page. Skipped without a query, where the
+            # page is the catalog rather than an answer and the row is not drawn: there
+            # are no matches to count, so counting them would be one query for nothing.
+            "match_counts": search_counts_by_category(db, query) if query else {},
         }
         | shell(db, nav_active=shelf.slug if shelf else None, search_category=shelf),
     )
