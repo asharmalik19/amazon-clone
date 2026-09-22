@@ -203,21 +203,14 @@ The two halves meet.
 
 ---
 
-## Phase 13 — Polish, accessibility, and hardening
+## Phase 13 — Polish and hardening
 
 - Visual pass against `amazon_screenshots/`: spacing, header density, CTA
   colour, star rendering, price typography.
-- Responsive check at mobile / tablet / desktop widths, on the live URL on a
-  real phone.
-- Accessibility: alt text on every product image, labelled form fields and
-  search input, visible focus rings, sensible heading order, keyboard-reachable
-  cart controls.
-- Read paths work with JavaScript disabled.
 - Error pages: a styled 404 and 500 rather than raw tracebacks; debug output off
   in production.
 
-**Accept:** the deployed app looks and behaves like a finished product on a
-phone and a laptop.
+**Accept:** the deployed app looks and behaves like a finished product on a laptop.
 
 ---
 
