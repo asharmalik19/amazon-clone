@@ -3,17 +3,15 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
-from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import JSONResponse, Response
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app import errors
 from app.config import BASE_DIR, get_settings
 from app.db import create_schema, get_engine
 from app.routers import auth, cart, catalog, product
-from app.templating import templates
 
 # Uvicorn configures its own loggers and leaves the root logger bare, so an application
 # log line would otherwise vanish instead of reaching the platform log. This is the
@@ -71,23 +69,9 @@ app.include_router(cart.router)
 app.include_router(auth.router)
 
 
-# FastAPI's default 404 is a JSON body, which is the wrong answer for a storefront a
-# person is browsing: a shopper who follows a stale link should land on the site, not on
-# `{"detail":"Not Found"}`. Phase 13 extends this to the rest of the error surface; the
-# 404 arrives now because an unknown product slug is a state Phase 5 has to handle.
-@app.exception_handler(StarletteHTTPException)
-async def not_found_page(request: Request, exc: StarletteHTTPException) -> Response:
-    """Render 404s as a page; leave every other status to FastAPI's own handler."""
-    if exc.status_code != 404:
-        return await http_exception_handler(request, exc)
-    # Starlette's own default detail is the bare reason phrase. A route that raised a
-    # sentence of its own gets to keep it; anything else gets copy written for a person.
-    message = exc.detail
-    if not message or message == "Not Found":
-        message = "We could not find that page."
-    return templates.TemplateResponse(
-        request, "not_found.html", {"message": message}, status_code=404
-    )
+# Every failure the storefront can show a shopper is a page of the storefront; the
+# handlers and the copy live in `app/errors.py`.
+errors.register(app)
 
 
 @app.get("/healthz")

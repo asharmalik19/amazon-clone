@@ -37,7 +37,7 @@
     {% if search_category %}Everything in {{ search_category.name }}{% else %}Today's catalog{% endif %}
   </h1>
   {% if search_category %}
-  <a href="/" class="text-amz-link hover:text-amz-cta-hover hover:underline">
+  <a href="/" class="text-amz-link hover:text-amz-link-hover hover:underline">
     Back to the full catalog
   </a>
   {% endif %}
@@ -53,7 +53,7 @@
 <h1 class="text-[21px] font-bold">Results for &ldquo;{{ query }}&rdquo;{{ in_category }}</h1>
 <p class="mt-1 text-neutral-600">
   {{ products | length }} {{ "product" if products | length == 1 else "products" }} matched.
-  <a href="/" class="text-amz-link hover:text-amz-cta-hover hover:underline">Back to the full catalog</a>
+  <a href="/" class="text-amz-link hover:text-amz-link-hover hover:underline">Back to the full catalog</a>
 </p>
 
 {{ category_filter(categories, match_counts, search_category.slug if search_category else none, query) }}

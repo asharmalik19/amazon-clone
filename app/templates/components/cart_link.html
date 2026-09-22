@@ -9,7 +9,8 @@
 
   `count` may be `None`, meaning "this page did not ask the database". The badge is then
   omitted rather than drawn as zero: a page that does not know what is in the cart
-  should not claim it is empty. That is the 404 page, which has no shell context.
+  should not claim it is empty. That is the error pages, which have no shell context --
+  see app/errors.py for why they deliberately ask the database nothing.
 #}
 
 {#
