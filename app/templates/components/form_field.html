@@ -1,0 +1,58 @@
+{#
+  The labelled text field the two auth forms are built from, and the error line that goes
+  with it.
+
+  One macro rather than markup repeated per field, because the parts that are easy to get
+  wrong are the parts that repeat: the `for`/`id` pair that makes the label clickable, the
+  `aria-describedby` that reads the error out with the field, and `aria-invalid` so a
+  screen reader announces "invalid" rather than leaving the red border as the only signal.
+
+  An error is passed in, never guessed at here: the route decides what is wrong with a
+  submission (see app/routers/auth.py), and this only renders it.
+#}
+
+{% macro field(name, label, type="text", value="", error=none, autocomplete=none,
+               autofocus=false, hint=none) -%}
+{%- set described = [] -%}
+{%- if hint %}{% set _ = described.append(name ~ "-hint") %}{% endif -%}
+{%- if error %}{% set _ = described.append(name ~ "-error") %}{% endif -%}
+<div class="mt-3">
+  <label for="{{ name }}" class="block font-bold">{{ label }}</label>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}"
+         {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+         {% if autofocus %}autofocus{% endif %}
+         {#- `required` is the browser's own first pass, and the server checks every
+             field again regardless: HTML validation is a convenience for the shopper,
+             not a guarantee, since a form can be submitted without it. #}
+         required
+         {% if error %}aria-invalid="true"{% endif %}
+         {% if described %}aria-describedby="{{ described | join(' ') }}"{% endif %}
+         class="mt-1 w-full rounded border px-2 py-1.5 leading-6 shadow-sm
+                focus:border-amz-link focus:outline-3 focus:outline-amz-cta/70
+                {% if error %}border-red-700{% else %}border-neutral-400{% endif %}">
+  {%- if hint %}
+  <p id="{{ name }}-hint" class="mt-1 text-[12px] text-neutral-600">{{ hint }}</p>
+  {%- endif %}
+  {%- if error %}
+  {{ field_error(name ~ "-error", error) }}
+  {%- endif %}
+</div>
+{%- endmacro %}
+
+{#
+  The error itself, also used on its own for the sign-in form's single message -- which
+  belongs to the submission rather than to either field, because saying which of the two
+  was wrong would turn the form into a way to find out who has an account here.
+
+  `role="alert"` so it is announced when the page comes back with it, rather than sitting
+  there silently for a shopper who is not looking at that part of the screen.
+#}
+{% macro field_error(id, message) -%}
+<p id="{{ id }}" role="alert" class="mt-1 flex items-start gap-1 text-red-700">
+  <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 4a1 1 0 011 1v4a1 1 0 01-2 0V7a1 1 0 011-1zm0
+             9.5a1.1 1.1 0 110-2.2 1.1 1.1 0 010 2.2z"/>
+  </svg>
+  <span>{{ message }}</span>
+</p>
+{%- endmacro %}

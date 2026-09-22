@@ -11,6 +11,10 @@ dependencies = [
     "sqlalchemy==2.0.36",
     # psycopg 3; the binary wheel keeps libpq out of the Docker build.
     "psycopg[binary]==3.2.3",
+    # Password hashing. The `bcrypt` package directly rather than passlib: passlib has
+    # had no release since 2019 and its bcrypt backend breaks against bcrypt 4.x, and
+    # the only thing this app needs from it is one hash and one verify.
+    "bcrypt==4.2.1",
 ]
 
 [project.optional-dependencies]

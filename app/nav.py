@@ -1,4 +1,4 @@
-"""The page shell: the category nav and the cart badge every page's header needs.
+"""The page shell: the category nav, the cart badge and who is signed in.
 
 It lives here rather than in a router because three routers render it -- the catalog
 screens, the product detail page and the cart all draw the header bar -- and a router
@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from app.cart import cart_item_count, read_cart
 from app.models import Category
+from app.security import read_user
 
 # What `nav_active` holds on the landing page. The nav's first link is "All", and on the
 # full catalog that link *is* the page the shopper is on, so it carries the same active
@@ -56,10 +57,17 @@ def shell(
     plain page load rather than only after an HTMX swap. It is a read and stays one:
     `read_cart` cannot create a cart or a cookie, so drawing the header for a visitor
     who is only browsing writes nothing.
+
+    `current_user` is read the same way, from the session cookie, and is `None` for a
+    signed-out visitor. It belongs here rather than in each route because the header
+    greets the shopper on every page: one function decides who they are, so no screen can
+    show "Hello, sign in" to somebody who is signed in. `read_user` is also a pure read,
+    for the same reason `read_cart` is.
     """
     return {
         "categories": list_categories(db),
         "nav_active": nav_active,
         "search_category": search_category,
         "cart_count": cart_item_count(read_cart(db, request)),
+        "current_user": read_user(db, request),
     }

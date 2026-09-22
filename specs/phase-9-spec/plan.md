@@ -53,7 +53,7 @@ Task groups in order. Each group is committable; the phase is done when
 1. `POST /cart/update` in `app/routers/cart.py`: resolve the slug (404), parse the
    quantity with `minimum=0` (400), `read_cart` (no creation), apply, commit.
 2. `POST /cart/remove`: the same, without a quantity.
-3. One `_cart_response(request, db, cart)` helper shared by both: `HX-Request` → the
+3. One `_edited_cart_response(request, cart)` helper shared by both: `HX-Request` → the
    fragment; plain post → `303` to `/cart`.
 4. Update the module docstring: the "Phase 9 is deliberately absent" note is no longer
    true.

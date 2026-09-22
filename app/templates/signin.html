@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "components/form_field.html" import field, field_error with context %}
+
+{% block title %}Sign in — {{ site_name }}{% endblock %}
+
+{% block content %}
+{#
+  Amazon's sign-in screen, narrowed to what this app actually does: one card, the fields,
+  the yellow button, and a way across to the sign-up form. No "keep me signed in" (the
+  session cookie already outlives the browser, so a checkbox that did nothing would be a
+  control that lies) and no password reset -- there is no mail to send one with, and a
+  link to a screen that cannot help is worse than no link.
+
+  The form posts to the same URL that rendered it, so it needs no `action` and cannot get
+  out of step with the route. `method="post"` and nothing else: signing in is a page
+  navigation, not an HTMX swap, because it changes the whole header (see
+  app/routers/auth.py).
+#}
+<div class="mx-auto max-w-[350px] py-4">
+
+  <h1 class="text-center text-xl font-bold lowercase tracking-tight">
+    <a href="/">{{ site_name }}<span class="align-super text-[10px] text-amz-link">.com</span></a>
+  </h1>
+
+  <section class="mt-4 rounded-lg border border-neutral-300 bg-white p-5">
+    <h2 class="text-[28px] font-normal leading-8">Sign in</h2>
+
+    {#- The one error this form can show belongs to the submission rather than to a field:
+        saying whether it was the email or the password that was wrong would make the form
+        a way to find out who has an account here. #}
+    {%- if errors.form %}
+    <div class="mt-2">{{ field_error("signin-error", errors.form) }}</div>
+    {%- endif %}
+
+    <form method="post">
+      {{ field("email", "Email", type="email", value=values.email | default(""),
+               autocomplete="email", autofocus=true) }}
+      {{ field("password", "Password", type="password", autocomplete="current-password") }}
+
+      <button type="submit"
+              class="mt-4 w-full rounded-lg bg-amz-cta px-4 py-1.5 font-medium text-neutral-900
+                     shadow-sm hover:bg-amz-cta-hover">
+        Sign in
+      </button>
+    </form>
+  </section>
+
+  {#- The way across, as Amazon has it: a labelled divider and a full-width secondary
+      button, because a shopper who has no account has to be able to get one from here. #}
+  <div class="mt-6 flex items-center gap-3 text-[12px] text-neutral-600">
+    <span class="h-px grow bg-neutral-300"></span>
+    <span>New to {{ site_name }}?</span>
+    <span class="h-px grow bg-neutral-300"></span>
+  </div>
+
+  <a href="/signup"
+     class="mt-3 block rounded-lg border border-neutral-400 bg-neutral-50 px-4 py-1.5 text-center
+            font-medium shadow-sm hover:bg-neutral-100">
+    Create your {{ site_name }} account
+  </a>
+</div>
+{% endblock %}

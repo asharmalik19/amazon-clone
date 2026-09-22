@@ -18,14 +18,12 @@ one answer to "whose cart is this?" rather than one per route. The rules it enfo
   `carts` table entirely, and it is why changing or removing a line reads the cart
   rather than creating one: an edit to a cart that does not exist has nothing to edit.
 
-The signature uses `hmac` from the standard library rather than a dependency: signing a
-short opaque token is thirty lines of stdlib, and the alternative is a package in the
-image for one call.
+The signing itself lives in `app.security`, which the session cookie uses too: one HMAC
+implementation for both cookies, out of the standard library rather than a dependency,
+because signing a short opaque token is thirty lines and the alternative is a package in
+the image for one call.
 """
 
-import base64
-import hashlib
-import hmac
 import secrets
 
 from fastapi import Request, Response
@@ -34,6 +32,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.config import get_settings
 from app.models import Cart, CartItem, Product
+from app.security import sign, unsign
 
 # The cookie a shopper's basket is found by.
 COOKIE_NAME = "cart_session"
@@ -50,24 +49,10 @@ MAX_ADD_QUANTITY = 10
 COOKIE_MAX_AGE_DAYS = 30
 COOKIE_MAX_AGE = COOKIE_MAX_AGE_DAYS * 24 * 60 * 60
 
-_SEPARATOR = "."
-
-
-def _signature(token: str) -> str:
-    """The HMAC of `token`, keyed by the application secret, as url-safe base64.
-
-    Truncated padding is stripped so the cookie value stays free of `=`, which would
-    otherwise have to be quoted.
-    """
-    digest = hmac.new(
-        get_settings().secret_key.encode("utf-8"), token.encode("utf-8"), hashlib.sha256
-    ).digest()
-    return base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
-
 
 def sign_token(token: str) -> str:
     """The cookie value for `token`: the token itself, then its signature."""
-    return f"{token}{_SEPARATOR}{_signature(token)}"
+    return sign(token)
 
 
 def read_token(request: Request) -> str | None:
@@ -78,26 +63,12 @@ def read_token(request: Request) -> str | None:
     and none of them should be met with anything other than a fresh cart. In particular
     a rotated `SECRET_KEY` invalidates old cookies rather than crashing on them.
 
-    `compare_digest` rather than `==`: the comparison is against attacker-supplied text,
-    and a timing difference is the one thing that would make forging a signature easier
-    than guessing it.
-
-    The comparison is over **bytes**. `compare_digest` raises `TypeError` on a `str`
-    holding anything outside ASCII, and a `Cookie` header is arbitrary bytes that
-    Starlette decodes character-for-character -- so one high byte in the signature would
-    otherwise be a 500 on a request anyone can send with `curl`. Encoding both sides
-    keeps the comparison constant-time and makes the reject path total: there is no
-    cookie value that is neither a match nor a mismatch.
+    The verification itself is `app.security.unsign`, which is also what checks the
+    session cookie: one HMAC implementation, one reject path, and no way for the two
+    cookies to end up disagreeing about what a valid signature is. See that function for
+    why the comparison is constant-time and over bytes.
     """
-    value = request.cookies.get(COOKIE_NAME)
-    if not value or _SEPARATOR not in value:
-        return None
-    token, _, signature = value.rpartition(_SEPARATOR)
-    if not token:
-        return None
-    if not hmac.compare_digest(signature.encode("utf-8"), _signature(token).encode("ascii")):
-        return None
-    return token
+    return unsign(request.cookies.get(COOKIE_NAME))
 
 
 def new_token() -> str:

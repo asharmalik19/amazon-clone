@@ -19,17 +19,22 @@ def test_home_has_the_header_shell(client):
     assert "Back to top" in body
 
 
-def test_unbuilt_header_controls_are_inert(client):
-    """Nothing on screen may look live before its phase lands.
+def test_no_header_control_is_inert_any_more(client):
+    """Nothing on screen may look live before its phase lands -- and now none is unbuilt.
 
-    Search left this list in Phase 6, the category bar in Phase 7 and the cart in
-    Phase 8, which is the point of the list: a control becomes live in exactly one
-    phase, and until then it is visibly inert rather than absent.
+    Search left this list in Phase 6, the category bar in Phase 7, the cart in Phase 8
+    and the account control in Phase 11, which is the point of the list: a control
+    becomes live in exactly one phase, and until then it is visibly inert rather than
+    absent. Every one of them has now landed, so the assertion is that no "arrives in a
+    later build" placeholder is left anywhere in the header.
     """
     body = client.get("/").text
-    assert "Category browsing arrives in a later build" not in body
-    assert "The cart arrives in a later build" not in body
-    assert "Accounts arrive in a later build" in body
+    assert "arrives in a later build" not in body
+    # The controls those placeholders stood in for, each now a real one.
+    assert 'action="/search"' in body
+    assert 'href="/category/' in body
+    assert 'href="/cart"' in body
+    assert 'href="/signin"' in body
 
 
 def test_unknown_page_is_not_a_crash(client):

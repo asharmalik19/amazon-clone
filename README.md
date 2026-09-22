@@ -14,7 +14,34 @@ minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 10 — a cart that is still there tomorrow.** The cart is held by one
+**Phase 11 — accounts.** A stranger can create one from the header: name, email,
+password, and the password again, because a password typed blind is a password
+worth typing twice. Signing up signs you in, the header stops saying "Hello,
+sign in" and starts saying your name, and Sign out is a button in a real form
+rather than a link — a sign-out a link could trigger is one any other site's
+`<img>` tag can trigger for you.
+
+Nothing about the forms is silent. A duplicate email, an address with no `@`, a
+password under 8 characters, one bcrypt would quietly truncate at 72 bytes, a
+mistyped confirmation, a missing name: each comes back as the same form with the
+message against the field it belongs to, every problem at once rather than one
+per submission, and with what was typed still in the fields — except the
+passwords, which are never echoed back into a page. Sign in is the deliberate
+exception: a wrong password and an unknown address get one identical message and
+the same half-second of hashing, because anything else turns the form into a way
+to find out who has an account here.
+
+Passwords are stored as bcrypt hashes and nothing else, so the database holds no
+password to steal. The session is one signed, httpOnly cookie carrying a user id
+and the moment it was issued, verified by the same HMAC helper the cart cookie
+uses — forged, truncated, expired, re-signed with a rotated key, or naming an
+account that no longer exists, every one of them is a signed-out visitor rather
+than an error page or somebody else's session. The window is checked on the
+server, because `Max-Age` is a request to the browser and the browser is the one
+party we cannot make keep it. Signing out ends the session and leaves the
+anonymous cart cookie alone; joining the two is Phase 12.
+
+Before it, **Phase 10 — a cart that is still there tomorrow.** The cart is held by one
 signed, httpOnly cookie, and this phase is about that cookie holding up. It
 carries a 30-day lifetime, refreshed by every add, so closing the tab no longer
 throws the cart away and a basket in weekly use never ages out — while a
@@ -31,7 +58,7 @@ signed with a rotated key: every one of them looks exactly like a first visit,
 which is an empty cart and no error page. Reads still write nothing at all — no
 cart row, no cookie — and only an add may bring either into existence.
 
-Before it, **Phase 9 — the cart a shopper can change their mind in.** Picking a quantity on a
+Before that, **Phase 9 — the cart a shopper can change their mind in.** Picking a quantity on a
 product page adds it to an anonymous cart held by a signed, httpOnly cookie; no
 cookie and no cart row exist until that first add, so browsing leaves no trace.
 `/cart` lists what is in it with per-line totals and a subtotal, and each line
@@ -85,10 +112,11 @@ item" bullets — and nothing the catalog cannot back up, so no invented stock,
 delivery date or seller. All 51 products sit in a responsive grid with prices
 formatted from integer cents and partial ratings drawn as partial stars.
 
-Accounts are Phase 11, so that header control stays visibly inert until the phase
-that implements it lands. The app is live in a container on Render backed by
-managed Postgres, so every phase reaches the live URL just by being committed to
-`main`.
+No control in the header is a placeholder any more — search, the category bar,
+the cart and the account menu all do what they say. The app is live in a
+container on Render backed by managed Postgres, so every phase reaches the live
+URL just by being committed to `main`, and an account created today is still
+there after the next deploy.
 
 ## Local setup
 

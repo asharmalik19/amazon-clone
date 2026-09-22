@@ -5,7 +5,7 @@ Task groups in order. Each group is committable; the phase is done when
 
 ## 1. The `Secure` decision, in `app/config.py`
 
-1. `_env_flag(name)` → `bool | None`: `1/true/yes/on` and `0/false/no/off`,
+1. `env_flag(name)` → `bool | None`: `1/true/yes/on` and `0/false/no/off`,
    case-insensitively, `None` when unset or blank. One parser, because Phase 13 will
    want a second flag.
 2. `Settings.cookie_secure_override: bool | None = None`, read from `COOKIE_SECURE` in

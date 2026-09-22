@@ -1,8 +1,9 @@
 """The catalog schema: one model layer that runs on SQLite and Postgres alike.
 
-Phase 3 owned the catalog -- `Category`, `Product`, `ProductImage` -- and Phase 8 adds
-the cart that hangs off it. `User` arrives with the phase that actually uses it, so
-nothing here is a table waiting for a feature that may never land.
+Phase 3 owned the catalog -- `Category`, `Product`, `ProductImage` -- Phase 8 added the
+cart that hangs off it, and Phase 11 brings `User`. Each table arrived with the phase
+that actually uses it, so nothing here is a table waiting for a feature that may never
+land.
 
 Two conventions hold everywhere in this file:
 
@@ -131,14 +132,52 @@ class ProductImage(Base):
         return f"<ProductImage {self.path}>"
 
 
+class User(Base):
+    """One shopper with an account.
+
+    The table arrives with Phase 11, the phase that actually signs people in, rather
+    than having sat empty since Phase 3. What it holds is the minimum an account needs
+    to exist: a name to greet them by, an email to find them by, and a hash to check
+    them against.
+
+    There is no password column and never will be -- `password_hash` holds a bcrypt
+    digest produced by `app.security`, so the plaintext a shopper typed exists only for
+    the length of one request and a stolen database yields no passwords.
+    """
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # `email` is the public identity: it is what a shopper signs in with, so it is
+    # stored already lowercased and stripped by `app.security.normalize_email`. Two
+    # accounts differing only in case would be two accounts one person cannot tell
+    # apart, so the uniqueness is over the normalized form -- which is the only form
+    # that is ever written.
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    # What the header greets them by. Amazon's signup form asks for a name, this one
+    # does too, and the header says "Hello, <name>" rather than showing an email
+    # address on every page of a storefront someone might be browsing in public.
+    name: Mapped[str] = mapped_column(String(120))
+    # A bcrypt digest: algorithm, cost and salt are all inside the string, so rotating
+    # the cost later needs no column change. 60 characters today; the column is wider
+    # than that on purpose, because a future algorithm prefix should not need a schema
+    # change in a project with no migrations.
+    password_hash: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<User {self.id}>"
+
+
 class Cart(Base):
     """One shopper's basket.
 
     A cart belongs either to a signed-in user or to an anonymous visitor identified by
     the opaque `session_token` in their cookie -- never to both, and never to neither.
-    `user_id` is nullable and unused until Phase 11 brings accounts; the column is here
-    now because Phase 12 merges an anonymous cart into a user's, and a nullable column
-    added with the table is cheaper than a schema change in a project with no migrations.
+    `user_id` is nullable and still unwritten: Phase 11 brings accounts, and Phase 12 is
+    where signing in merges an anonymous cart into a user's. The column is here now
+    because a nullable column added with the table is cheaper than a schema change in a
+    project with no migrations.
 
     Rows are created lazily, by the first add to cart. A visitor who only browses has no
     cart row and no cookie, so this table counts baskets rather than page views.
@@ -147,8 +186,12 @@ class Cart(Base):
     __tablename__ = "carts"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # No `users` foreign key yet -- that table does not exist until Phase 11, and a
-    # constraint pointing at a missing table would fail `create_all` today.
+    # Deliberately still a plain integer rather than a `ForeignKey("users.id")`, now
+    # that `users` exists. There are no migrations here: `create_all` cannot add a
+    # constraint to the `carts` table already in production, so declaring one would
+    # make the models describe a schema the deployed database does not have. Phase 12
+    # is what starts writing this column, and the one function that sets it is what
+    # keeps it pointing at a real user -- not a constraint only fresh databases get.
     user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     # The signed value in the shopper's cookie is derived from this; the signature is
     # never stored, so a leaked database row cannot be replayed as a valid cookie.

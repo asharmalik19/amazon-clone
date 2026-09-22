@@ -1,3 +1,4 @@
+{% from "components/account_menu.html" import account_menu with context -%}
 {% from "components/cart_link.html" import cart_link with context -%}
 {% from "components/category_nav.html" import category_nav with context -%}
 <!DOCTYPE html>
@@ -91,7 +92,11 @@
 
       <div class="order-3 ml-auto flex shrink-0 items-center sm:order-4 sm:ml-0">
         {% if features.account %}
-          {% block account_menu %}{% endblock %}
+          {#- `current_user` comes from `shell()`, so it is undefined on the 404 page --
+              the one screen with no shell context. That renders the signed-out state,
+              which is a link to the sign-in form: correct for a stranger, and a click
+              rather than a lie for somebody who is signed in. #}
+          {{ account_menu(current_user | default(none)) }}
         {% else %}
           <span class="cursor-not-allowed rounded px-2 py-1 text-neutral-400"
                 title="Accounts arrive in a later build">

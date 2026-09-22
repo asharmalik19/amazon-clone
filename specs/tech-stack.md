@@ -17,7 +17,7 @@ access required at runtime.
 | Database (production) | Managed Postgres (`psycopg`) — survives redeploys |
 | ORM | SQLAlchemy 2.x (declarative, typed) — one model layer, two backends |
 | Migrations | None — schema created from models, data from the seed script |
-| Auth | Session cookie (signed, httpOnly), `passlib[bcrypt]` password hashing |
+| Auth | Session cookie (signed, httpOnly), `bcrypt` password hashing |
 | Server | Uvicorn |
 | Hosting | Render — Docker web service, auto-deploy on push to `main` |
 | Tests | pytest + `httpx`/FastAPI `TestClient` |
@@ -45,6 +45,13 @@ access required at runtime.
   makes this a URL swap, and the test suite runs against both.
 - **Session cookies**, not JWT: we need sign in / sign out with server-side
   truth. Cookies are the simpler and safer default for a server-rendered app.
+  The session cookie and the cart cookie are signed by the same HMAC helper in
+  `app/security.py` — one implementation, one reject path, so the two cannot end
+  up trusting different things.
+- **`bcrypt` directly, not `passlib[bcrypt]`** (changed in Phase 11): passlib
+  has had no release since 2019 and its bcrypt backend raises against bcrypt
+  4.x, so the wrapper is now a liability rather than a convenience. All this app
+  asks of it is one hash and one verify, which `bcrypt` exposes itself.
 
 ## Project shape
 
@@ -85,7 +92,7 @@ render.yaml          # Render service + Postgres, infrastructure as code
   cents**, rating (0–5, one decimal), rating_count, category_id.
 - `ProductImage` — id, product_id, path, position. A product has 1..n images so
   the detail page can show a gallery.
-- `User` — id, email, password_hash, created_at.
+- `User` — id, email (normalized, unique), name, password_hash, created_at.
 - `Cart` — id, user_id (nullable), session_token (nullable), created_at.
 - `CartItem` — id, cart_id, product_id, quantity. Unique on (cart_id, product_id).
 

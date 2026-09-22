@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "components/form_field.html" import field with context %}
+
+{% block title %}Create account — {{ site_name }}{% endblock %}
+
+{% block content %}
+{#
+  Amazon's "Create account" screen: name, email, password, password again. The fourth
+  field is not ceremony -- a password is typed blind, and the only way to catch a typo in
+  it is to type it twice. Without it a new account's first sign-in attempt is a guess.
+
+  Every error the route found is rendered against its own field at once, so a shopper
+  fixes one form rather than discovering one problem per submission. The values they typed
+  come back with it -- except the passwords, which are deliberately not echoed (see
+  app/routers/auth.py).
+#}
+<div class="mx-auto max-w-[350px] py-4">
+
+  <h1 class="text-center text-xl font-bold lowercase tracking-tight">
+    <a href="/">{{ site_name }}<span class="align-super text-[10px] text-amz-link">.com</span></a>
+  </h1>
+
+  <section class="mt-4 rounded-lg border border-neutral-300 bg-white p-5">
+    <h2 class="text-[28px] font-normal leading-8">Create account</h2>
+
+    <form method="post">
+      {{ field("name", "Your name", value=values.name | default(""),
+               error=errors.name | default(none), autocomplete="name", autofocus=true) }}
+      {{ field("email", "Email", type="email", value=values.email | default(""),
+               error=errors.email | default(none), autocomplete="email") }}
+      {#- The rule is stated before the shopper picks a password, not after they are told
+          theirs is wrong. The number comes from `app.security`, through a template
+          global, so the form cannot promise a rule the server does not enforce. #}
+      {{ field("password", "Password", type="password", error=errors.password | default(none),
+               autocomplete="new-password",
+               hint="At least " ~ password_min_length ~ " characters.") }}
+      {{ field("password_confirm", "Re-enter password", type="password",
+               error=errors.password_confirm | default(none), autocomplete="new-password") }}
+
+      <button type="submit"
+              class="mt-4 w-full rounded-lg bg-amz-cta px-4 py-1.5 font-medium text-neutral-900
+                     shadow-sm hover:bg-amz-cta-hover">
+        Create your {{ site_name }} account
+      </button>
+    </form>
+  </section>
+
+  <p class="mt-5 text-center">
+    Already have an account?
+    <a href="/signin" class="text-amz-link hover:underline hover:text-red-700">Sign in</a>
+  </p>
+</div>
+{% endblock %}
