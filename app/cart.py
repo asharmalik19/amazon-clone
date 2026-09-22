@@ -8,9 +8,10 @@ one answer to "whose cart is this?" rather than one per route. The rules it enfo
   cookie at all -- the shopper gets a fresh empty cart instead of an error page, and
   never someone else's basket.
 - **Reads never write.** `read_cart` is safe to call while rendering any page; it cannot
-  create a row or set a cookie. Only `get_or_create_cart`, called from the one write
-  route, does that. That is what keeps a browsing visitor -- or a crawler -- out of the
-  `carts` table entirely.
+  create a row or set a cookie. Only `get_or_create_cart`, called from `POST /cart/add`
+  alone, does that. That is what keeps a browsing visitor -- or a crawler -- out of the
+  `carts` table entirely, and it is why changing or removing a line reads the cart
+  rather than creating one: an edit to a cart that does not exist has nothing to edit.
 
 The signature uses `hmac` from the standard library rather than a dependency: signing a
 short opaque token is thirty lines of stdlib, and the alternative is a package in the
@@ -169,7 +170,7 @@ def add_to_cart(db: Session, cart: Cart, product: Product, quantity: int) -> Car
     it -- without deciding for the route whether the request as a whole succeeded.
     """
     db.flush()
-    existing = next((item for item in cart.items if item.product_id == product.id), None)
+    existing = find_item(cart, product)
     if existing is not None:
         existing.quantity += quantity
         return existing
@@ -179,8 +180,66 @@ def add_to_cart(db: Session, cart: Cart, product: Product, quantity: int) -> Car
     return item
 
 
-def parse_quantity(raw: str) -> int | None:
-    """`raw` as a quantity between 1 and `MAX_ADD_QUANTITY`, or `None` if it is not one.
+def find_item(cart: Cart, product: Product) -> CartItem | None:
+    """The line `product` is on in `cart`, or `None` if it is not in the cart.
+
+    One matcher for all three write paths -- add, update, remove -- because the unique
+    constraint on `(cart_id, product_id)` guarantees there is at most one line to find,
+    and three hand-rolled searches would be three places for that guarantee to be
+    forgotten. The scan is over the lines already loaded with the cart, so it costs no
+    query.
+    """
+    return next((item for item in cart.items if item.product_id == product.id), None)
+
+
+def set_quantity(db: Session, cart: Cart, product: Product, quantity: int) -> CartItem | None:
+    """Set `product`'s line in `cart` to `quantity`, or remove it when `quantity` is 0.
+
+    Returns the line, or `None` when there is no longer one -- removed, or never there.
+
+    A quantity of zero is a removal rather than a stored zero: `CheckConstraint
+    ("quantity >= 1")` would refuse the row anyway, and a shopper who picks 0 has said
+    "take it out", not "keep a line worth nothing".
+
+    Removal goes through `cart.items.remove`, not `db.delete`, so the `delete-orphan`
+    cascade deletes the row *and* the in-memory cart the caller is about to render is
+    already correct. Deleting the object alone would leave the removed line in
+    `cart.items` until a refresh, and the subtotal in the response would still include
+    it.
+
+    A product that is not in the cart is not an error. A double-submitted Delete, a
+    stale second tab and a cleared cookie all arrive here as "that line is already
+    gone", which is the state the shopper asked for.
+    """
+    item = find_item(cart, product)
+    if item is None:
+        return None
+    if quantity == 0:
+        cart.items.remove(item)
+        db.flush()
+        return None
+    item.quantity = quantity
+    return item
+
+
+def remove_item(db: Session, cart: Cart, product: Product) -> bool:
+    """Drop `product`'s line from `cart`. `True` if there was one to drop.
+
+    The same operation the picker's `0` performs, kept as its own function because it is
+    its own control: a shopper reaching for Delete should not have to route their intent
+    through a quantity. `False` means there was nothing to remove, which is a fine
+    outcome for a Delete pressed twice -- the caller renders the cart either way.
+    """
+    item = find_item(cart, product)
+    if item is None:
+        return False
+    cart.items.remove(item)
+    db.flush()
+    return True
+
+
+def parse_quantity(raw: str, *, minimum: int = 1) -> int | None:
+    """`raw` as a quantity between `minimum` and `MAX_ADD_QUANTITY`, or `None`.
 
     The picker is a `<select>` of exactly these values, so a shopper cannot produce
     anything else: a rejected quantity means a hand-built or replayed POST, not a
@@ -188,12 +247,18 @@ def parse_quantity(raw: str) -> int | None:
     because the route wants to answer with its own status rather than a framework
     validation error -- and because "0" and "-1" are integers that parse fine and still
     must not reach the database.
+
+    `minimum` is the one thing the two write paths disagree about. Adding zero of
+    something is meaningless, so `POST /cart/add` keeps the default floor of 1; on the
+    cart page `0` is how a shopper deletes a line, so `POST /cart/update` passes
+    `minimum=0`. The ceiling is the same number for both, and it is the same number the
+    picker is built from.
     """
     try:
         quantity = int(raw)
     except (TypeError, ValueError):
         return None
-    if not 1 <= quantity <= MAX_ADD_QUANTITY:
+    if not minimum <= quantity <= MAX_ADD_QUANTITY:
         return None
     return quantity
 

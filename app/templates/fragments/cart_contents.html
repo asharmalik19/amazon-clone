@@ -1,0 +1,19 @@
+{#
+  What a quantity change or a line removal swaps back into the cart page.
+
+  Two things come back in one response, exactly as `fragments/cart_added.html` does it:
+  the cart contents region replaces itself at `#cart-contents`, and the header badge is
+  re-rendered with `hx-swap-oob="true"` so HTMX finds it by id wherever it sits in the
+  header. The badge is the shared macro rather than markup written twice, so the count
+  beside the basket and the "N items" in the subtotal cannot disagree.
+
+  There is no separate "line removed" response: the region decides for itself whether
+  the cart still has lines, so removing the last one returns the empty state from the
+  same template that returned the filled cart a moment earlier.
+#}
+{% from "components/cart_contents.html" import cart_contents with context %}
+{% from "components/cart_link.html" import cart_count_badge with context %}
+
+{{ cart_count_badge(cart_count, oob=true) }}
+
+{{ cart_contents(cart) }}

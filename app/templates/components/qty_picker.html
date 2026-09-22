@@ -8,16 +8,31 @@
 
   `max` is passed in from `MAX_ADD_QUANTITY` rather than hard-coded, so the limit the
   page offers and the limit the route enforces are the same number.
+
+  Two things vary by where it is used. On a product page the floor is 1, because adding
+  zero of something means nothing. On the cart page the floor is 0, because that is how
+  a shopper deletes a line -- labelled so, since an unexplained 0 in a quantity list
+  reads like a typo. And a cart line can legitimately hold more than the ceiling (ten
+  added twice is twenty), so a `selected` value above `max` is appended rather than
+  dropped: the picker must show the quantity the cart actually holds, never a quietly
+  clamped one.
 #}
 
-{% macro qty_picker(max, selected=1) -%}
+{% macro qty_picker(max, selected=1, minimum=1, of_product=none) -%}
+{% set choices = range(minimum, max + 1) | list %}
+{% set choices = choices if selected in choices else choices + [selected] %}
 <label class="flex items-center gap-1.5">
-  <span>Qty:</span>
+  {#- "Qty" is all the label the eye needs, because the product it belongs to is right
+      there. A screen reader reading down a cart hears the label out of that context, so
+      `of_product` names the line it belongs to for assistive tech only. #}
+  <span>Qty:{% if of_product %}<span class="sr-only"> {{ of_product.title }}</span>{% endif %}</span>
   <select name="quantity"
           class="rounded border border-neutral-400 bg-amz-page px-2 py-1 shadow-sm
                  focus:outline-3 focus:outline-amz-cta">
-    {% for value in range(1, max + 1) %}
-    <option value="{{ value }}" {% if value == selected %}selected{% endif %}>{{ value }}</option>
+    {% for value in choices %}
+    <option value="{{ value }}" {% if value == selected %}selected{% endif %}>
+      {{- "0 (Delete)" if value == 0 else value -}}
+    </option>
     {% endfor %}
   </select>
 </label>

@@ -14,7 +14,25 @@ minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 7 — category browse and filter.** The category bar under the header is
+**Phase 9 — the cart a shopper can change their mind in.** Picking a quantity on a
+product page adds it to an anonymous cart held by a signed, httpOnly cookie; no
+cookie and no cart row exist until that first add, so browsing leaves no trace.
+`/cart` lists what is in it with per-line totals and a subtotal, and each line
+carries the two controls that make a cart a cart: a quantity picker (`0` deletes)
+and Delete. Both are real forms — with JavaScript they swap the cart contents and
+the header badge in place, without it they post and land back on `/cart` with the
+change applied. Removing the last line returns the same empty state a first-time
+visitor sees, from the same component, so the two cannot drift.
+
+Money never leaves integer cents: a line total is `price_cents × quantity`, the
+subtotal is the sum of those, and the only division is the one that puts the dot
+in the rendered price. A quantity the picker cannot produce is refused rather than
+guessed at, an edit to a product that is not in the cart changes nothing instead
+of erroring, and an edit sent with no cookie creates no cart. **Proceed to
+Checkout** is rendered visibly disabled and says why: checkout is out of scope for
+this project, permanently.
+
+Before it, **Phase 7 — category browse and filter.** The category bar under the header is
 drawn from the database, so it lists every shelf the catalog actually has and
 nothing it does not. `/category/{slug}` shows one shelf in the same grid of the
 same cards as the landing page, the bar marks where the shopper currently is,
@@ -50,10 +68,10 @@ item" bullets — and nothing the catalog cannot back up, so no invented stock,
 delivery date or seller. All 51 products sit in a responsive grid with prices
 formatted from integer cents and partial ratings drawn as partial stars.
 
-The cart and accounts are Phases 8 and 11, so those header controls stay visibly
-inert until the phase that implements each one lands. The app is live in a
-container on Render backed by managed Postgres, so every phase reaches the live
-URL just by being committed to `main`.
+Accounts are Phase 11, so that header control stays visibly inert until the phase
+that implements it lands. The app is live in a container on Render backed by
+managed Postgres, so every phase reaches the live URL just by being committed to
+`main`.
 
 ## Local setup
 

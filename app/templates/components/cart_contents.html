@@ -1,0 +1,93 @@
+{#
+  Everything on the cart page that a cart mutation can change: the lines, the two
+  statements of the subtotal, the summary panel -- or, when the cart is empty, the
+  screen that says so.
+
+  It is a component rather than markup inside `cart.html` because two things render it:
+  a full page load, and the fragment `POST /cart/update` and `POST /cart/remove` answer
+  an HTMX request with. If those two built the region separately they would drift, and
+  the drift would show up as a subtotal that only recalculates on reload.
+
+  `id="cart-contents"` is the swap target for every control inside it, with
+  `hx-swap="outerHTML"` -- the element replaces itself. One target, because one quantity
+  change moves the line total, both subtotals and the header badge; four targeted swaps
+  would be four chances for them to disagree. The header badge is the one thing outside
+  this region, so it rides along out of band (see fragments/cart_contents.html).
+
+  Whether the cart is empty is decided here, not by the caller, so that removing the
+  last line produces the same empty state as arriving without a cookie.
+#}
+{% from "components/cart_line.html" import cart_line with context %}
+{% from "components/price.html" import price with context %}
+
+{% macro subtotal_line(cart, class="") -%}
+{#- The subtotal appears twice on purpose, as it does on Amazon: once at the end of the
+    list a shopper has just read down, and once in the panel that stays in view beside
+    it. One macro reading one `cart.subtotal_cents`, so they cannot disagree. #}
+<p class="flex items-baseline gap-2 text-[18px] {{ class }}">
+  <span>Subtotal ({{ cart.item_count }} item{{ "" if cart.item_count == 1 else "s" }}):</span>
+  <span class="font-bold">{{ price(cart.subtotal_cents) }}</span>
+</p>
+{%- endmacro %}
+
+{% macro cart_contents(cart) -%}
+<div id="cart-contents">
+{% if cart and cart.items %}
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+
+  <section class="rounded bg-white p-4 shadow-sm lg:col-span-9">
+    <h1 class="border-b border-neutral-200 pb-3 text-[28px] font-normal">Shopping Cart</h1>
+    <ul>
+      {% for item in cart.items %}
+      {{ cart_line(item) }}
+      {% endfor %}
+    </ul>
+
+    {{ subtotal_line(cart, class="mt-3 justify-end") }}
+  </section>
+
+  <aside class="h-fit rounded bg-white p-4 shadow-sm lg:col-span-3">
+    {{ subtotal_line(cart) }}
+
+    {#- Checkout is out of scope for this project, permanently (specs/mission.md). The
+        roadmap forbids a control that does nothing, so the button is rendered in the
+        one remaining honest state: visibly disabled, announced as disabled, and
+        labelled with why. It is not a link and not in a form -- there is nothing behind
+        it to submit to. #}
+    <button type="button" disabled aria-disabled="true"
+            class="mt-4 w-full cursor-not-allowed rounded-full bg-amz-cta/40 px-4 py-2
+                   font-medium text-neutral-500">
+      Proceed to Checkout
+    </button>
+    <p class="mt-2 text-[12px] leading-4 text-neutral-600">
+      Checkout is out of scope for this demo, so this button is deliberately inactive.
+    </p>
+  </aside>
+</div>
+
+<p class="mt-4">
+  <a href="/" class="text-amz-link hover:text-amz-cta-hover hover:underline">
+    ← Continue shopping
+  </a>
+</p>
+
+{% else %}
+{#- An empty cart is the state a shopper sees most often -- it is what the header link
+    leads to before they have added anything, and now also what removing the last line
+    leaves behind -- so it is a real screen with a way out of it, not an empty list
+    under a heading. #}
+<section class="mx-auto max-w-2xl rounded bg-white p-6 text-center shadow-sm">
+  <h1 class="text-2xl font-bold">Your cart is empty</h1>
+  <p class="mt-3 text-neutral-700">
+    Nothing in here yet. Add something from a product page and it will show up.
+  </p>
+  <p class="mt-5">
+    <a href="/" class="inline-block rounded bg-amz-cta px-6 py-2 font-medium text-neutral-900
+                       hover:bg-amz-cta-hover">
+      Shop the catalog
+    </a>
+  </p>
+</section>
+{% endif %}
+</div>
+{%- endmacro %}

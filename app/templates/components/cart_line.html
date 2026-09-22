@@ -1,23 +1,34 @@
 {#
-  One line of the cart: the product, how many of it, and what that costs.
+  One line of the cart: the product, how many of it, what that costs, and the two ways
+  to change your mind about it.
 
   Deliberately *not* `product_card.html`. The card is a tile in a grid answering "is
   this the thing I want?"; a cart line is a row answering "is this what I am buying?" --
-  different shape, different information, and it carries a quantity the card knows
-  nothing about. Bending the card to be both is what would make both worse, so the card
-  stays the only way a product is *browsed* and this is the only way one is *listed*.
+  different shape, different information, and it carries a quantity and two controls the
+  card knows nothing about. Bending the card to be both is what would make both worse,
+  so the card stays the only way a product is *browsed* and this is the only way one is
+  *listed*.
 
   The rating is left off for the same reason: a shopper who has put the thing in their
   cart has finished evaluating it.
 
-  Quantity is text, not a control. Changing it and removing the line are Phase 9's, and
-  a phase does not leave behind a control that does nothing.
+  Both controls are real forms posting to real URLs, with `hx-post` layered on -- the
+  same shape as Add to Cart. With script, HTMX replaces the cart contents region in
+  place. Without it, the browser posts the form and follows the `303` back to `/cart`
+  with the change applied: a page navigation, not a dead control.
+
+  Quantity is a select plus a visible **Update** button rather than an auto-submitting
+  select, because auto-submit is a JavaScript behaviour: without it a shopper would be
+  left holding a changed select and no way to commit it. One control, one visible way to
+  press it, with or without script.
 #}
 {% from "components/price.html" import price with context %}
+{% from "components/qty_picker.html" import qty_picker with context %}
 
 {% macro cart_line(item) -%}
 {% set product = item.product %}
-<li class="flex gap-4 border-b border-neutral-200 py-4 last:border-b-0">
+<li id="cart-line-{{ product.slug }}"
+    class="flex gap-4 border-b border-neutral-200 py-4 last:border-b-0">
 
   <a href="/product/{{ product.slug }}" tabindex="-1" aria-hidden="true"
      class="w-24 shrink-0 sm:w-32">
@@ -36,16 +47,42 @@
     </h2>
     <p class="text-neutral-600">
       {{ product.category.name }}
-    </p>
-    <p>
-      Quantity: <span class="font-bold">{{ item.quantity }}</span>
-      {#- The unit price is repeated next to the quantity because the number on the
-          right is the line total, and a shopper checking their cart is entitled to see
-          the multiplication rather than take it on trust. #}
-      <span class="text-neutral-600">
-        &times; ${{ "{:,}".format(product.price_cents // 100) }}.{{ "%02d" | format(product.price_cents % 100) }} each
+      {#- The unit price is stated next to the product because the number on the right is
+          the line total, and a shopper checking their cart is entitled to see the
+          multiplication rather than take it on trust. #}
+      <span class="whitespace-nowrap">
+        &middot; ${{ "{:,}".format(product.price_cents // 100) }}.{{ "%02d" | format(product.price_cents % 100) }} each
       </span>
     </p>
+
+    <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2">
+      <form action="/cart/update" method="post"
+            hx-post="/cart/update" hx-target="#cart-contents" hx-swap="outerHTML"
+            class="flex items-center gap-2">
+        <input type="hidden" name="slug" value="{{ product.slug }}">
+        {{ qty_picker(max_add_quantity, selected=item.quantity, minimum=0,
+                      of_product=product) }}
+        <button type="submit"
+                class="rounded border border-neutral-400 bg-amz-page px-3 py-1 shadow-sm
+                       hover:bg-neutral-100 focus:outline-3 focus:outline-amz-link">
+          Update
+        </button>
+      </form>
+
+      <form action="/cart/remove" method="post"
+            hx-post="/cart/remove" hx-target="#cart-contents" hx-swap="outerHTML">
+        <input type="hidden" name="slug" value="{{ product.slug }}">
+        <button type="submit"
+                class="text-amz-link hover:text-amz-cta-hover hover:underline
+                       focus:outline-3 focus:outline-amz-link">
+          Delete
+          {#- The visible label is the short one Amazon uses; the accessible name says
+              which line it deletes, because "Delete" repeated down a list tells a
+              screen reader user nothing about which one they are on. #}
+          <span class="sr-only">{{ product.title }} from your cart</span>
+        </button>
+      </form>
+    </div>
   </div>
 
   <div class="shrink-0 text-right">{{ price(item.line_total_cents) }}</div>

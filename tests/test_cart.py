@@ -10,42 +10,10 @@ Prices come from the committed catalog, so the arithmetic is asserted against th
 numbers a shopper really sees on the live site.
 """
 
-import html
-import re
-
 import pytest
 
 from app.cart import COOKIE_NAME, MAX_ADD_QUANTITY, sign_token
-
-
-def add(client, slug, quantity=1, htmx=False):
-    """Post an add-to-cart the way the rendered form does."""
-    headers = {"HX-Request": "true"} if htmx else {}
-    return client.post(
-        "/cart/add",
-        data={"slug": slug, "quantity": str(quantity)},
-        headers=headers,
-        # The no-JS path answers with a 303; following it here would hide the status
-        # under the cart page's 200, and the redirect is the thing under test.
-        follow_redirects=False,
-    )
-
-
-def cart_page(client) -> str:
-    """The cart page's HTML, with entities decoded so titles can be matched as written."""
-    response = client.get("/cart")
-    assert response.status_code == 200
-    return html.unescape(response.text)
-
-
-def money(cents: int) -> str:
-    """Cents formatted the way `components/price.html` renders them for a screen reader."""
-    return f"${cents // 100:,}.{cents % 100:02d}"
-
-
-def line_totals(page: str) -> list[str]:
-    """Every price on the page, in order, as the accessible text of the price macro."""
-    return re.findall(r'<span class="sr-only">(\$[\d,]+\.\d\d)</span>', page)
+from tests.cart_helpers import add, cart_page, line_totals, money, quantity_of
 
 
 @pytest.fixture
@@ -66,7 +34,7 @@ def test_adding_a_product_creates_one_line_with_that_quantity(client, product):
     assert add(client, product["slug"], 2).status_code == 303
     page = cart_page(client)
     assert product["title"] in page
-    assert 'Quantity: <span class="font-bold">2</span>' in page
+    assert quantity_of(page, product["slug"]) == 2
     assert page.count("<li ") == 1
 
 
@@ -77,7 +45,7 @@ def test_adding_the_same_product_again_sums_the_quantity(client, product):
     # One line, not two: the unique constraint on (cart, product) is the rule, and
     # summing is how the write path keeps it true.
     assert page.count("<li ") == 1
-    assert 'Quantity: <span class="font-bold">5</span>' in page
+    assert quantity_of(page, product["slug"]) == 5
     assert money(product["price_cents"] * 5) in page
 
 
@@ -102,7 +70,7 @@ def test_a_missing_or_blank_quantity_means_one(client, product, body):
         "/cart/add", data={"slug": product["slug"]} | body, follow_redirects=False
     )
     assert response.status_code == 303
-    assert 'Quantity: <span class="font-bold">1</span>' in cart_page(client)
+    assert quantity_of(cart_page(client), product["slug"]) == 1
 
 
 def test_an_unknown_slug_is_a_404_and_is_not_echoed_back(client):
@@ -192,11 +160,18 @@ def test_a_line_links_back_to_the_product(client, product):
 
 
 def test_the_cart_page_offers_no_control_it_cannot_honour(client, product):
-    """Quantity editing, removal and checkout are Phase 9. None may appear inert here."""
+    """Every control on the cart page posts somewhere real -- or is visibly disabled.
+
+    Phase 8 asserted the absence of the edit controls; Phase 9 ships them, so what this
+    now guards is the rule behind that assertion rather than the phase boundary: nothing
+    on the page promises a capability the app does not have. Checkout is the one
+    permanent exception (specs/mission.md), and it is rendered `disabled` rather than
+    live.
+    """
     add(client, product["slug"], 2)
     page = cart_page(client)
-    for later_phase in ("/cart/update", "/cart/remove", "Proceed to Checkout", "Delete"):
-        assert later_phase not in page
+    for absent in ("Save for later", "Gift options", "Apply coupon", "/checkout"):
+        assert absent not in page
 
 
 def test_an_empty_cart_is_a_real_screen_with_a_way_out(client):
