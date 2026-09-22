@@ -1,0 +1,974 @@
+{
+  "_about": [
+    "The single source of catalog truth. `python -m seed.seed` loads this file into",
+    "whichever database DATABASE_URL points at; nothing is fetched at runtime.",
+    "",
+    "Provenance, stated plainly so nobody mistakes this for scraped data:",
+    "  - Titles, prices, ratings and rating counts are transcribed by hand from the",
+    "    reference screenshots in amazon_screenshots/. Where the reference did not show",
+    "    a field for an item (a price hidden behind a delivery promise, a rating cut off",
+    "    at the edge of the grid), the value here is a plausible stand-in.",
+    "  - Descriptions and key_info bullets are written by us in the style of the",
+    "    reference. They are not Amazon's copy.",
+    "  - Images are locally generated placeholders under app/static/products/. No",
+    "    Amazon image is hotlinked or redistributed. Regenerate them with",
+    "    `python -m seed.make_placeholders`.",
+    "",
+    "price_cents is an integer count of cents. There are no float prices anywhere."
+  ],
+  "categories": [
+    { "slug": "electronics", "name": "Electronics", "position": 1 },
+    { "slug": "home-kitchen", "name": "Home & Kitchen", "position": 2 },
+    { "slug": "books", "name": "Books", "position": 3 },
+    { "slug": "grocery", "name": "Grocery & Gourmet Food", "position": 4 },
+    { "slug": "beauty-personal-care", "name": "Beauty & Personal Care", "position": 5 },
+    { "slug": "toys-games", "name": "Toys & Games", "position": 6 }
+  ],
+  "products": [
+    {
+      "slug": "amazon-fire-tv-stick-4k-select",
+      "title": "Amazon Fire TV Stick 4K Select (newest model), start streaming in 4K, AI-powered search, free & live TV",
+      "category": "electronics",
+      "price_cents": 2999,
+      "rating": 4.0,
+      "rating_count": 16521,
+      "description": "Turns any HDMI television into a 4K streaming set. Plug it in, sign in once, and every app you already pay for lives behind one remote instead of four.",
+      "key_info": [
+        "Streams in 4K Ultra HD with HDR10+ and Dolby Digital Plus audio",
+        "AI-powered search finds a title by plot, actor or half-remembered scene",
+        "Thousands of free live channels alongside the apps you subscribe to",
+        "Alexa Voice Remote included; controls TV power and volume too"
+      ],
+      "images": [
+        "products/amazon-fire-tv-stick-4k-select-1.svg",
+        "products/amazon-fire-tv-stick-4k-select-2.svg"
+      ]
+    },
+    {
+      "slug": "amazon-fire-tv-stick-hd",
+      "title": "Amazon Fire TV Stick HD (newest model), free & live TV, Alexa Voice Remote, powered by the TV",
+      "category": "electronics",
+      "price_cents": 2199,
+      "rating": 4.6,
+      "rating_count": 114343,
+      "description": "The inexpensive way to make an older television behave like a new one. Full HD streaming, powered from the set itself, with a remote that also turns the TV on.",
+      "key_info": [
+        "1080p Full HD streaming with Dolby Atmos-ready audio passthrough",
+        "Draws power from the television, so one fewer wall socket is in play",
+        "Alexa Voice Remote with dedicated TV power and volume buttons",
+        "Set-up is one sign-in; your apps and subscriptions carry over"
+      ],
+      "images": [
+        "products/amazon-fire-tv-stick-hd-1.svg",
+        "products/amazon-fire-tv-stick-hd-2.svg"
+      ]
+    },
+    {
+      "slug": "amazon-fire-tv-alexa-voice-remote-pro",
+      "title": "Amazon Fire TV Alexa Voice Remote Pro (newest model) with remote finder, TV controls, and backlit buttons",
+      "category": "electronics",
+      "price_cents": 2499,
+      "rating": 4.5,
+      "rating_count": 12843,
+      "description": "The remote you buy after losing the one in the box. Backlit buttons for a dark room, two programmable shortcuts, and a finder that makes it chirp from under the sofa cushion.",
+      "key_info": [
+        "Say \"Alexa, find my remote\" and it answers out loud",
+        "Motion-activated backlight; the keys are readable with the lights off",
+        "Two customisable buttons for the apps or channels you actually use",
+        "Controls TV and soundbar power, volume and input"
+      ],
+      "images": [
+        "products/amazon-fire-tv-alexa-voice-remote-pro-1.svg",
+        "products/amazon-fire-tv-alexa-voice-remote-pro-2.svg"
+      ]
+    },
+    {
+      "slug": "amazon-fire-tv-cube",
+      "title": "Amazon Fire TV Cube, hands-free streaming device with Alexa, Wi-Fi 6E, 4K Ultra HD",
+      "category": "electronics",
+      "price_cents": 19999,
+      "rating": 4.5,
+      "rating_count": 15937,
+      "description": "The fastest Fire TV, and the only one you can talk to without picking anything up. Wi-Fi 6E and an Ethernet port keep 4K streams steady on a busy home network.",
+      "key_info": [
+        "Hands-free Alexa: ask for a show without reaching for the remote",
+        "Wi-Fi 6E plus a wired Ethernet port for congested networks",
+        "4K Ultra HD with Dolby Vision, HDR10+ and Dolby Atmos",
+        "HDMI input passes a cable box or console through the same cube"
+      ],
+      "images": [
+        "products/amazon-fire-tv-cube-1.svg",
+        "products/amazon-fire-tv-cube-2.svg",
+        "products/amazon-fire-tv-cube-3.svg"
+      ]
+    },
+    {
+      "slug": "apple-airtag-2nd-generation",
+      "title": "Apple AirTag (2nd Generation): Tracker for Keychain, Wallet, and More; Locator with Sound; Simple One-Tap Setup with iPhone",
+      "category": "electronics",
+      "price_cents": 2900,
+      "rating": 4.5,
+      "rating_count": 10900,
+      "description": "A coin-sized tag for the things that go missing. One tap pairs it to an iPhone, and Precision Finding walks you to it arrow by arrow instead of just showing a dot on a map.",
+      "key_info": [
+        "One-tap setup; no account to create and nothing to configure",
+        "Precision Finding gives direction and distance, not just a map pin",
+        "Built-in speaker plays a sound so you can find it by ear",
+        "User-replaceable battery lasts about a year"
+      ],
+      "images": [
+        "products/apple-airtag-2nd-generation-1.svg",
+        "products/apple-airtag-2nd-generation-2.svg"
+      ]
+    },
+    {
+      "slug": "apple-earpods-usb-c",
+      "title": "Apple EarPods Headphones with USB-C Plug, Wired Ear Buds with Built-in Remote to Control Music, Phone Calls, and Volume",
+      "category": "electronics",
+      "price_cents": 1999,
+      "rating": 4.5,
+      "rating_count": 18097,
+      "description": "Wired earbuds that never need charging and never drop a connection. The USB-C plug fits current iPhones, iPads and Macs, and the inline remote handles calls and volume.",
+      "key_info": [
+        "USB-C plug works with recent iPhone, iPad and Mac models",
+        "Nothing to charge and nothing to pair -- plug in and play",
+        "Inline remote answers calls and adjusts volume",
+        "Vented design that sits in the ear rather than sealing it"
+      ],
+      "images": [
+        "products/apple-earpods-usb-c-1.svg",
+        "products/apple-earpods-usb-c-2.svg"
+      ]
+    },
+    {
+      "slug": "apple-ipad-11-inch-a16-128gb",
+      "title": "Apple iPad 11-inch: A16 chip, 11-inch Model, Liquid Retina Display, 128GB, Wi-Fi 6, 12MP Front/12MP Back Camera, Touch ID, All-Day Battery Life",
+      "category": "electronics",
+      "price_cents": 34900,
+      "rating": 4.8,
+      "rating_count": 7412,
+      "description": "The iPad most people should buy. Fast enough for anything short of professional video, light enough to read on in bed, and it lasts a working day away from a charger.",
+      "key_info": [
+        "11-inch Liquid Retina display, 128GB of storage",
+        "A16 chip; Wi-Fi 6 and Touch ID in the top button",
+        "12MP cameras front and back, with Center Stage on video calls",
+        "All-day battery life; charges over USB-C"
+      ],
+      "images": [
+        "products/apple-ipad-11-inch-a16-128gb-1.svg",
+        "products/apple-ipad-11-inch-a16-128gb-2.svg",
+        "products/apple-ipad-11-inch-a16-128gb-3.svg"
+      ]
+    },
+    {
+      "slug": "happrun-google-tv-1080p-projector",
+      "title": "Official Licensed Google TV - HAPPRUN Native 1080P Bluetooth Projector with Autofocus, Portable Outdoor Movie Projector",
+      "category": "electronics",
+      "price_cents": 26993,
+      "rating": 4.4,
+      "rating_count": 827,
+      "description": "A licensed Google TV projector, so the streaming apps are built in rather than bolted on with a dongle. Autofocus and keystone correction square the picture up on their own.",
+      "key_info": [
+        "Native 1080p with Google TV and its app store built in",
+        "Autofocus and automatic keystone correction on every power-on",
+        "Bluetooth out to a speaker or soundbar; 40 to 200 inch picture",
+        "Chromecast built in for casting straight from a phone"
+      ],
+      "images": [
+        "products/happrun-google-tv-1080p-projector-1.svg",
+        "products/happrun-google-tv-1080p-projector-2.svg"
+      ]
+    },
+    {
+      "slug": "ge-smart-scale-body-weight",
+      "title": "GE Smart Scale for Body Weight: Full Body Composition Analysis with Bluetooth and App Sync",
+      "category": "electronics",
+      "price_cents": 9879,
+      "rating": 4.3,
+      "rating_count": 5000,
+      "description": "A bathroom scale that keeps the history for you. Step on barefoot and it reads body composition, then syncs the numbers to your phone before you have found a towel.",
+      "key_info": [
+        "Measures weight plus body composition across several metrics",
+        "Bluetooth sync to the companion app; history kept per person",
+        "Recognises multiple users automatically from their weight profile",
+        "Tempered glass platform with a high-contrast backlit display"
+      ],
+      "images": [
+        "products/ge-smart-scale-body-weight-1.svg",
+        "products/ge-smart-scale-body-weight-2.svg"
+      ]
+    },
+    {
+      "slug": "arboleaf-smart-scale-dual-frequency",
+      "title": "arboleaf Smart Scale for Body Weight, Dual-Frequency Body Composition Monitor with Large Display",
+      "category": "electronics",
+      "price_cents": 10999,
+      "rating": 4.7,
+      "rating_count": 18200,
+      "description": "Dual-frequency sensing reads deeper than a single-frequency scale, which is the difference between a weight trend and a body-composition trend. Everything lands in one app.",
+      "key_info": [
+        "Dual-frequency body composition analysis with a large readout",
+        "Unlimited users; the app separates their histories automatically",
+        "Syncs with the major fitness apps rather than locking data in",
+        "Works over Bluetooth with no hub or subscription"
+      ],
+      "images": [
+        "products/arboleaf-smart-scale-dual-frequency-1.svg",
+        "products/arboleaf-smart-scale-dual-frequency-2.svg"
+      ]
+    },
+    {
+      "slug": "yishu-surge-protector-power-strip",
+      "title": "YISHU 6Ft Surge Protector Power Strip with 8 Widely Spaced Outlets and 4 USB Ports, Flat Plug",
+      "category": "electronics",
+      "price_cents": 999,
+      "rating": 4.5,
+      "rating_count": 53545,
+      "description": "Eight outlets spaced far enough apart that a wall wart does not steal its neighbour, on a six-foot cord with a flat plug that sits behind furniture without pushing it off the wall.",
+      "key_info": [
+        "8 AC outlets, widely spaced for bulky adapters, plus 4 USB ports",
+        "Flat plug and 6ft cord fit behind a desk or a bed frame",
+        "Surge protection with an indicator light that tells you it still works",
+        "Wall-mountable via keyhole slots on the back"
+      ],
+      "images": [
+        "products/yishu-surge-protector-power-strip-1.svg",
+        "products/yishu-surge-protector-power-strip-2.svg"
+      ]
+    },
+    {
+      "slug": "queen-4-piece-sheet-set-dark-grey",
+      "title": "Queen Size 4 Piece Sheet Set - Breathable & Cooling Sheets - Dark Grey | Hotel Luxury Bed Sheets for Women & Men, Deep Pockets",
+      "category": "home-kitchen",
+      "price_cents": 2499,
+      "rating": 4.5,
+      "rating_count": 457040,
+      "description": "Brushed microfibre sheets that sleep cool and come out of the dryer without a wrinkle. Deep pockets mean the fitted sheet stays on a thick mattress instead of pinging off a corner at 3am.",
+      "key_info": [
+        "4 pieces: flat sheet, fitted sheet and two pillowcases",
+        "Deep pockets fit mattresses up to 16 inches, elasticated all round",
+        "Breathable brushed microfibre, fade and wrinkle resistant",
+        "Machine washable cold; tumble dry low"
+      ],
+      "images": [
+        "products/queen-4-piece-sheet-set-dark-grey-1.svg",
+        "products/queen-4-piece-sheet-set-dark-grey-2.svg",
+        "products/queen-4-piece-sheet-set-dark-grey-3.svg"
+      ]
+    },
+    {
+      "slug": "owala-freesip-water-bottle-24oz-denim",
+      "title": "Owala FreeSip Stainless Steel Water Bottle, 24 oz, Denim",
+      "category": "home-kitchen",
+      "price_cents": 2999,
+      "rating": 4.5,
+      "rating_count": 138720,
+      "description": "Two ways to drink from one lid: a built-in straw for sipping at a desk, or a wide spout for swallowing properly after a run. Insulated well enough that ice survives a hot afternoon.",
+      "key_info": [
+        "FreeSip spout: sip through the straw or tilt back and swig",
+        "Double-wall stainless steel keeps drinks cold up to 24 hours",
+        "Push-button lid locks shut so it can go in a bag",
+        "Carry loop, and a body that fits a standard cup holder"
+      ],
+      "images": [
+        "products/owala-freesip-water-bottle-24oz-denim-1.svg",
+        "products/owala-freesip-water-bottle-24oz-denim-2.svg"
+      ]
+    },
+    {
+      "slug": "terro-liquid-ant-killer-bait-stations-12-pack",
+      "title": "TERRO Liquid Ant Killer Bait Stations, 12-Pack, Indoor Ant Traps, T300B | Borax Formula, Kills the Queen & the Entire Colony",
+      "category": "home-kitchen",
+      "price_cents": 958,
+      "rating": 4.5,
+      "rating_count": 163297,
+      "description": "Works by being carried home rather than by killing on contact, which is why the trail gets worse before it disappears. That is the bait doing its job on the colony.",
+      "key_info": [
+        "12 pre-filled bait stations; no measuring and no mess",
+        "Borax formula the workers carry back to the queen",
+        "Expect more ants for a few days, then none",
+        "For indoor use against common household ants"
+      ],
+      "images": [
+        "products/terro-liquid-ant-killer-bait-stations-12-pack-1.svg",
+        "products/terro-liquid-ant-killer-bait-stations-12-pack-2.svg"
+      ]
+    },
+    {
+      "slug": "zevo-flying-insect-trap-refill-cartridges",
+      "title": "Zevo Flying Insect Trap Refill Cartridges for Fruit Flies & Gnats, 4 Count | Fits Zevo MAX & Zevo Flying Insect Trap",
+      "category": "home-kitchen",
+      "price_cents": 1497,
+      "rating": 4.8,
+      "rating_count": 37037,
+      "description": "Refills for the plug-in trap: blue and UV light draws flying insects in and a sticky sheet holds them. No spray, no smell, and nothing to clean up but the cartridge.",
+      "key_info": [
+        "4 refill cartridges, roughly 45 days of continuous use each",
+        "Fits Zevo MAX and the standard Zevo Flying Insect Trap",
+        "Catches fruit flies, gnats, house flies and moths",
+        "No insecticide sprayed into the room"
+      ],
+      "images": [
+        "products/zevo-flying-insect-trap-refill-cartridges-1.svg",
+        "products/zevo-flying-insect-trap-refill-cartridges-2.svg"
+      ]
+    },
+    {
+      "slug": "amazon-basics-velvet-suit-hangers-50-pack",
+      "title": "Amazon Basics Slim Velvet Non-Slip Space Saving Suit Clothes Hangers, Closet Organizer, Black, 50-Pack",
+      "category": "home-kitchen",
+      "price_cents": 1889,
+      "rating": 4.8,
+      "rating_count": 236615,
+      "description": "The cheapest way to get a third more into the same wardrobe. Velvet holds a silk blouse or a wide-necked top on the hanger instead of on the floor.",
+      "key_info": [
+        "50 hangers, roughly a quarter the thickness of plastic ones",
+        "Velvet surface stops slippery fabrics sliding off",
+        "Notched shoulders and a swivel hook for straps and ties",
+        "Rated to about 10 lbs each; a suit jacket keeps its shape"
+      ],
+      "images": [
+        "products/amazon-basics-velvet-suit-hangers-50-pack-1.svg",
+        "products/amazon-basics-velvet-suit-hangers-50-pack-2.svg"
+      ]
+    },
+    {
+      "slug": "gorilla-grip-stainless-steel-can-opener",
+      "title": "GORILLA GRIP Upgraded Model Stainless Steel Manual Can Opener, Black | US Designed, Oversized Handheld Turn Knob",
+      "category": "home-kitchen",
+      "price_cents": 849,
+      "rating": 4.5,
+      "rating_count": 6950,
+      "description": "An oversized knob and cushioned handles turn opening a tin into something you can do one-handed and arthritic. Cuts the lid cleanly rather than leaving a jagged rim.",
+      "key_info": [
+        "Oversized turn knob needs far less grip strength",
+        "Stainless steel cutting wheel; sharp through years of tins",
+        "Cushioned handles and a built-in bottle opener",
+        "Wipes clean; hand wash to keep the mechanism smooth"
+      ],
+      "images": [
+        "products/gorilla-grip-stainless-steel-can-opener-1.svg",
+        "products/gorilla-grip-stainless-steel-can-opener-2.svg"
+      ]
+    },
+    {
+      "slug": "adhesive-bathroom-holders-dispensers-5-pack",
+      "title": "5 Pack Adhesive Bathroom Holders & Dispensers for Kids & Adults, Black | Large Capacity No-Drilling Rustproof Shower Caddy Shelves",
+      "category": "home-kitchen",
+      "price_cents": 999,
+      "rating": 4.5,
+      "rating_count": 1235,
+      "description": "Five shelves and hooks that go up with adhesive instead of a drill, which matters in a rented bathroom. Rustproof, and drainage slots mean they do not sit in standing water.",
+      "key_info": [
+        "5 pieces: shelves, hooks and a corner caddy",
+        "Strong adhesive backing -- no drilling, no tile damage",
+        "Rustproof with drainage slots in every base",
+        "Holds full-size bottles rather than travel minis"
+      ],
+      "images": [
+        "products/adhesive-bathroom-holders-dispensers-5-pack-1.svg",
+        "products/adhesive-bathroom-holders-dispensers-5-pack-2.svg"
+      ]
+    },
+    {
+      "slug": "febreze-air-freshener-pumpkin-roll-3ct",
+      "title": "Febreze Odor-Fighting Air Freshener Spray, Room Spray, Pumpkin Roll Air Mist, 8.1 oz, 3ct",
+      "category": "home-kitchen",
+      "price_cents": 1034,
+      "rating": 4.5,
+      "rating_count": 220,
+      "description": "A seasonal room spray that neutralises the smell rather than laying sugar on top of it. Three cans, which is about one per floor of a small house.",
+      "key_info": [
+        "3 cans, 8.1 oz each",
+        "Eliminates odours rather than masking them",
+        "Pumpkin Roll scent, seasonal limited edition",
+        "Fine mist that does not leave a residue on fabric"
+      ],
+      "images": [
+        "products/febreze-air-freshener-pumpkin-roll-3ct-1.svg",
+        "products/febreze-air-freshener-pumpkin-roll-3ct-2.svg"
+      ]
+    },
+    {
+      "slug": "beelicious-pro-vacuum-sealer-machine",
+      "title": "Beelicious Pro Vacuum Sealer Machine for Food, Multiple Modes with Starter Bags and Roll",
+      "category": "home-kitchen",
+      "price_cents": 11999,
+      "rating": 4.5,
+      "rating_count": 103,
+      "description": "Seals meat, cheese and soft fruit without crushing any of them -- the dry, moist and gentle modes exist for exactly that reason. Comes with enough bags to be useful the day it arrives.",
+      "key_info": [
+        "Dry, moist and gentle modes for different foods",
+        "Starter bags and a cutter roll included",
+        "Built-in cutter and roll storage in the lid",
+        "Pulse button for anything that would crush under full vacuum"
+      ],
+      "images": [
+        "products/beelicious-pro-vacuum-sealer-machine-1.svg",
+        "products/beelicious-pro-vacuum-sealer-machine-2.svg"
+      ]
+    },
+    {
+      "slug": "bedlore-waterproof-mattress-protector-queen",
+      "title": "BEDLORE Waterproof Mattress Protector, Queen Size Mattress Pad Noiseless | Deep Pockets Fit 6\"-18\" Mattresses, Soft Cotton Terry",
+      "category": "home-kitchen",
+      "price_cents": 2999,
+      "rating": 4.5,
+      "rating_count": 26588,
+      "description": "Waterproof without the crackle -- the membrane sits under cotton terry, so it protects the mattress and still feels like bedding. Deep pockets fit thick mattresses and pillow tops.",
+      "key_info": [
+        "Fully waterproof membrane under a soft cotton terry surface",
+        "Noiseless: no plastic crackle when you turn over",
+        "Deep pockets fit 6 to 18 inch mattresses",
+        "Machine washable and tumble dry safe"
+      ],
+      "images": [
+        "products/bedlore-waterproof-mattress-protector-queen-1.svg",
+        "products/bedlore-waterproof-mattress-protector-queen-2.svg"
+      ]
+    },
+    {
+      "slug": "barossa-design-shower-curtain-liner",
+      "title": "Barossa Design Oeko-tex Certified Shower Curtain Liner Standard Size, Clear | Waterproof PEVA, Rustproof Grommets, 3 Bottom Magnets",
+      "category": "home-kitchen",
+      "price_cents": 1299,
+      "rating": 4.6,
+      "rating_count": 41208,
+      "description": "A clear PEVA liner that keeps the light in a windowless bathroom. Three magnets in the hem hold it against the tub instead of wrapping itself around your legs.",
+      "key_info": [
+        "Waterproof PEVA, Oeko-tex certified and chlorine free",
+        "3 bottom magnets keep the hem down and inside the tub",
+        "12 rustproof metal grommets",
+        "Stain and soap scum resistant; wipes clean"
+      ],
+      "images": [
+        "products/barossa-design-shower-curtain-liner-1.svg",
+        "products/barossa-design-shower-curtain-liner-2.svg"
+      ]
+    },
+    {
+      "slug": "mrs-meyers-hand-soap-refill-lemon-verbena",
+      "title": "Mrs. Meyer's Clean Day Hand Soap Refill, Lemon Verbena Scent, 33 Fl Oz",
+      "category": "home-kitchen",
+      "price_cents": 1499,
+      "rating": 4.8,
+      "rating_count": 22415,
+      "description": "One 33 oz jug refills a pump bottle about four times, which is the cheaper and less wasteful way to buy hand soap. Lemon verbena, and it does not leave hands tight.",
+      "key_info": [
+        "33 fl oz refill; roughly four standard pump bottles",
+        "Plant-derived cleaning ingredients with aloe and olive oil",
+        "Lemon verbena scent from essential oils",
+        "Cruelty free and never tested on animals"
+      ],
+      "images": [
+        "products/mrs-meyers-hand-soap-refill-lemon-verbena-1.svg",
+        "products/mrs-meyers-hand-soap-refill-lemon-verbena-2.svg"
+      ]
+    },
+    {
+      "slug": "pathfinders-jl-collins",
+      "title": "Pathfinders: Extraordinary Stories of People Like You on the Path to Financial Independence",
+      "category": "books",
+      "price_cents": 1999,
+      "rating": 4.5,
+      "rating_count": 467,
+      "description": "The follow-up to The Simple Path to Wealth, told through other people's numbers rather than the author's. Short accounts of ordinary earners who got free of a salary, including the ones who did it badly first.",
+      "key_info": [
+        "By JL Collins, author of The Simple Path to Wealth",
+        "Dozens of first-person accounts across incomes and countries",
+        "Paperback, 400 pages",
+        "Reads in any order -- one story per sitting"
+      ],
+      "images": [
+        "products/pathfinders-jl-collins-1.svg",
+        "products/pathfinders-jl-collins-2.svg"
+      ]
+    },
+    {
+      "slug": "the-way-things-work",
+      "title": "The Way Things Work: From Levers to Lasers, Cars to Computers -- A Visual Guide to the World of Machines",
+      "category": "books",
+      "price_cents": 2129,
+      "rating": 4.5,
+      "rating_count": 266,
+      "description": "David Macaulay draws the inside of everything -- zips, jet engines, hard drives -- and explains each one from the physics up. The rare reference book children and engineers fight over.",
+      "key_info": [
+        "By David Macaulay, illustrated throughout in cutaway",
+        "Covers mechanics, electricity, optics, computing and more",
+        "Hardcover, built to survive being read flat",
+        "Written for anyone from about nine upwards"
+      ],
+      "images": ["products/the-way-things-work-1.svg", "products/the-way-things-work-2.svg"]
+    },
+    {
+      "slug": "making-things-move-diy-mechanisms",
+      "title": "Making Things Move DIY Mechanisms for Inventors, Hobbyists, and Artists",
+      "category": "books",
+      "price_cents": 2715,
+      "rating": 4.5,
+      "rating_count": 326,
+      "description": "The book that fills the gap between a circuit that works on a breadboard and a thing that actually moves. Gears, cams, bearings and motors, with the arithmetic you need and none you do not.",
+      "key_info": [
+        "By Dustyn Roberts; mechanisms explained for non-engineers",
+        "Covers motors, gearing, linkages, fasteners and materials",
+        "Worked projects with parts lists you can order",
+        "Paperback, 368 pages"
+      ],
+      "images": [
+        "products/making-things-move-diy-mechanisms-1.svg",
+        "products/making-things-move-diy-mechanisms-2.svg"
+      ]
+    },
+    {
+      "slug": "the-pragmatic-programmer",
+      "title": "The Pragmatic Programmer: Your Journey to Mastery, 20th Anniversary Edition",
+      "category": "books",
+      "price_cents": 4597,
+      "rating": 5.0,
+      "rating_count": 3645,
+      "description": "Thomas and Hunt on the habits that separate a developer from a typist: orthogonality, tracer bullets, not repeating yourself. Rewritten twenty years on, with the examples that had aged badly replaced.",
+      "key_info": [
+        "By David Thomas and Andrew Hunt",
+        "20th anniversary edition, fully revised and re-exampled",
+        "Hardcover, 352 pages",
+        "Language-agnostic: the advice outlives any given stack"
+      ],
+      "images": [
+        "products/the-pragmatic-programmer-1.svg",
+        "products/the-pragmatic-programmer-2.svg"
+      ]
+    },
+    {
+      "slug": "the-mythical-man-month",
+      "title": "The Mythical Man-Month: Essays on Software Engineering, Anniversary Edition",
+      "category": "books",
+      "price_cents": 3060,
+      "rating": 4.5,
+      "rating_count": 1810,
+      "description": "Fifty years old and still the last word on why adding people to a late project makes it later. Brooks writes about scheduling, second systems and conceptual integrity from inside IBM's OS/360.",
+      "key_info": [
+        "By Frederick P. Brooks Jr.",
+        "Anniversary edition with four additional chapters",
+        "Includes the No Silver Bullet essay and Brooks's later retraction",
+        "Paperback, 336 pages"
+      ],
+      "images": ["products/the-mythical-man-month-1.svg", "products/the-mythical-man-month-2.svg"]
+    },
+    {
+      "slug": "the-simple-path-to-wealth",
+      "title": "The Simple Path to Wealth: Your Road Map to Financial Independence and a Rich, Free Life",
+      "category": "books",
+      "price_cents": 1500,
+      "rating": 4.5,
+      "rating_count": 16596,
+      "description": "Grew out of letters to the author's daughter, which is why it explains index funds without condescending. One strategy, argued properly, instead of twelve options and a shrug.",
+      "key_info": [
+        "By JL Collins",
+        "Covers index investing, asset allocation and withdrawal rates",
+        "Written as plain letters, not as a textbook",
+        "Paperback, 286 pages"
+      ],
+      "images": [
+        "products/the-simple-path-to-wealth-1.svg",
+        "products/the-simple-path-to-wealth-2.svg"
+      ]
+    },
+    {
+      "slug": "the-little-book-of-common-sense-investing",
+      "title": "The Little Book of Common Sense Investing: The Only Way to Guarantee Your Fair Share of Stock Market Returns, 10th Anniversary Edition",
+      "category": "books",
+      "price_cents": 2495,
+      "rating": 4.0,
+      "rating_count": 11631,
+      "description": "The founder of Vanguard making the arithmetic case for the index fund he invented. Short, repetitive on purpose, and hard to argue with once you have seen the fee tables.",
+      "key_info": [
+        "By John C. Bogle, founder of The Vanguard Group",
+        "10th anniversary edition, updated and revised",
+        "Hardcover, 304 pages",
+        "The case for low-cost index funds, with the numbers behind it"
+      ],
+      "images": [
+        "products/the-little-book-of-common-sense-investing-1.svg",
+        "products/the-little-book-of-common-sense-investing-2.svg"
+      ]
+    },
+    {
+      "slug": "the-mom-test",
+      "title": "The Mom Test: How to Talk to Customers & Learn if Your Business is a Good Idea When Everyone is Lying to You",
+      "category": "books",
+      "price_cents": 699,
+      "rating": 4.5,
+      "rating_count": 4372,
+      "description": "A short book about asking questions that cannot be answered politely. Fitzpatrick's rule: talk about their life, not your idea, because everyone will tell you your idea is great.",
+      "key_info": [
+        "By Rob Fitzpatrick",
+        "Scripts and anti-patterns for customer conversations",
+        "Short enough to read before your next interview",
+        "Available as paperback and Audible audiobook"
+      ],
+      "images": ["products/the-mom-test-1.svg", "products/the-mom-test-2.svg"]
+    },
+    {
+      "slug": "10x-is-easier-than-2x",
+      "title": "10x Is Easier Than 2x: How World-Class Entrepreneurs Achieve More by Doing Less",
+      "category": "books",
+      "price_cents": 1463,
+      "rating": 4.5,
+      "rating_count": 956,
+      "description": "The argument is counterintuitive and the title gives it away: doubling requires grinding harder at everything, while a tenfold jump forces you to drop 80 percent of it. Sullivan and Hardy on choosing what to abandon.",
+      "key_info": [
+        "By Dan Sullivan with Dr. Benjamin Hardy",
+        "Hardcover, 240 pages",
+        "Frameworks for cutting scope rather than adding hours",
+        "From the founder of Strategic Coach"
+      ],
+      "images": ["products/10x-is-easier-than-2x-1.svg", "products/10x-is-easier-than-2x-2.svg"]
+    },
+    {
+      "slug": "the-1-page-marketing-plan",
+      "title": "The 1-Page Marketing Plan: Get New Customers, Make More Money, And Stand Out From The Crowd",
+      "category": "books",
+      "price_cents": 1859,
+      "rating": 4.5,
+      "rating_count": 11623,
+      "description": "Nine boxes on one page, filled in before you spend anything. Dib's point is that most small businesses do tactics without a plan and call the result marketing.",
+      "key_info": [
+        "By Allan Dib",
+        "A single-page template across before, during and after the sale",
+        "Revised and updated edition, paperback, 236 pages",
+        "Aimed at small businesses rather than brand teams"
+      ],
+      "images": [
+        "products/the-1-page-marketing-plan-1.svg",
+        "products/the-1-page-marketing-plan-2.svg"
+      ]
+    },
+    {
+      "slug": "the-signal-and-the-noise",
+      "title": "The Signal and the Noise: Why So Many Predictions Fail -- but Some Don't",
+      "category": "books",
+      "price_cents": 1348,
+      "rating": 4.5,
+      "rating_count": 3922,
+      "description": "Nate Silver on forecasting across elections, poker, earthquakes and baseball, and on why a confident prediction is usually a worse one. A working introduction to thinking in probabilities.",
+      "key_info": [
+        "By Nate Silver, founder of FiveThirtyEight",
+        "Case studies from weather, sport, finance and politics",
+        "Paperback, 560 pages",
+        "New York Times bestseller"
+      ],
+      "images": ["products/the-signal-and-the-noise-1.svg", "products/the-signal-and-the-noise-2.svg"]
+    },
+    {
+      "slug": "verity-colleen-hoover",
+      "title": "Verity",
+      "category": "books",
+      "price_cents": 1353,
+      "rating": 4.5,
+      "rating_count": 403130,
+      "description": "A struggling writer takes over an injured author's series, finds an unfinished manuscript in the study, and cannot stop reading it. Hoover's thriller, and the reason four hundred thousand people left a rating.",
+      "key_info": [
+        "By Colleen Hoover",
+        "Paperback, 336 pages",
+        "Psychological thriller; contains adult content",
+        "Over 400,000 customer ratings"
+      ],
+      "images": ["products/verity-colleen-hoover-1.svg", "products/verity-colleen-hoover-2.svg"]
+    },
+    {
+      "slug": "medium-hass-avocado",
+      "title": "Medium Hass Avocado, One Each",
+      "category": "grocery",
+      "price_cents": 129,
+      "rating": 4.5,
+      "rating_count": 46692,
+      "description": "Sold one at a time, so you can buy the number you will actually eat. Firm on arrival and ready in a couple of days on the counter.",
+      "key_info": [
+        "One medium Hass avocado, sold individually",
+        "Arrives firm; ripens in 2 to 3 days at room temperature",
+        "Refrigerate once ripe to hold it another few days",
+        "Ready when it yields slightly to gentle pressure"
+      ],
+      "images": ["products/medium-hass-avocado-1.svg", "products/medium-hass-avocado-2.svg"]
+    },
+    {
+      "slug": "banana-bunch-4-5-count",
+      "title": "Banana Bunch (4-5 Count)",
+      "category": "grocery",
+      "price_cents": 199,
+      "rating": 4.5,
+      "rating_count": 79784,
+      "description": "A bunch of four to five, picked green so they arrive intact rather than bruised. Eat them over the week as they turn.",
+      "key_info": [
+        "4 to 5 bananas per bunch",
+        "Arrives green to yellow; ripens on the counter",
+        "Keep out of the fridge until fully ripe",
+        "Sold by the bunch, not by weight"
+      ],
+      "images": ["products/banana-bunch-4-5-count-1.svg", "products/banana-bunch-4-5-count-2.svg"]
+    },
+    {
+      "slug": "honeycrisp-apples-3-lb",
+      "title": "Amazon Grocery, Honeycrisp Apples, 3 lb (Previously Fresh Brand, Packaging May Vary)",
+      "category": "grocery",
+      "price_cents": 699,
+      "rating": 4.5,
+      "rating_count": 6355,
+      "description": "Three pounds of Honeycrisp -- the variety that actually snaps. Sweet rather than sharp, and they keep for weeks in the fridge drawer.",
+      "key_info": [
+        "3 lb bag, roughly 6 to 8 apples depending on size",
+        "Honeycrisp: crisp, juicy, sweet with a little acidity",
+        "Keeps several weeks refrigerated",
+        "Packaging may vary; previously sold as Fresh Brand"
+      ],
+      "images": ["products/honeycrisp-apples-3-lb-1.svg", "products/honeycrisp-apples-3-lb-2.svg"]
+    },
+    {
+      "slug": "bloom-nutrition-energy-drink-apple-crisp-12pk",
+      "title": "Bloom Nutrition Zero Sugar Energy Drink, Apple Crisp, 12oz 12pk | 180mg natural caffeine with prebiotics, green tea",
+      "category": "grocery",
+      "price_cents": 2999,
+      "rating": 5.0,
+      "rating_count": 2037,
+      "description": "An energy drink built around green tea caffeine and prebiotic fibre rather than sugar, which is mostly a claim about how you feel two hours later. Apple Crisp, twelve cans.",
+      "key_info": [
+        "12 pack of 12oz cans, zero sugar",
+        "180mg naturally sourced caffeine per can",
+        "Prebiotics and green tea extract",
+        "No artificial colours"
+      ],
+      "images": [
+        "products/bloom-nutrition-energy-drink-apple-crisp-12pk-1.svg",
+        "products/bloom-nutrition-energy-drink-apple-crisp-12pk-2.svg"
+      ]
+    },
+    {
+      "slug": "monster-energy-zero-ultra-15-pack",
+      "title": "Monster Energy Zero Ultra, Sugar Free Energy Drink, 16 Ounce | Pack of 15",
+      "category": "grocery",
+      "price_cents": 3348,
+      "rating": 4.5,
+      "rating_count": 35541,
+      "description": "The white can: the full Monster energy blend without the sugar or the syrupy finish. Fifteen sixteen-ounce cans, which is the point of buying it by the case.",
+      "key_info": [
+        "15 cans, 16 fl oz each",
+        "Sugar free and zero calories",
+        "Lighter, citrus-leaning flavour rather than the original",
+        "Contains the standard Monster energy blend"
+      ],
+      "images": [
+        "products/monster-energy-zero-ultra-15-pack-1.svg",
+        "products/monster-energy-zero-ultra-15-pack-2.svg"
+      ]
+    },
+    {
+      "slug": "premier-protein-shake-chocolate-12-pack",
+      "title": "Premier Protein 30g High Protein Shake, Chocolate, 12 Pack | 160 Calories, 24 Vitamins & Minerals, No Added Sugar",
+      "category": "grocery",
+      "price_cents": 2898,
+      "rating": 4.5,
+      "rating_count": 60468,
+      "description": "Thirty grams of protein for a hundred and sixty calories, which is the whole reason these exist. Shelf stable until opened, so a case can live in a cupboard.",
+      "key_info": [
+        "12 shakes, 30g protein and 160 calories each",
+        "1g sugar, no added sugar; 24 vitamins and minerals",
+        "Shelf stable -- refrigerate after opening",
+        "Gluten free and soy free"
+      ],
+      "images": [
+        "products/premier-protein-shake-chocolate-12-pack-1.svg",
+        "products/premier-protein-shake-chocolate-12-pack-2.svg"
+      ]
+    },
+    {
+      "slug": "eos-shea-better-body-lotion-vanilla-cashmere",
+      "title": "eos Shea Better Body Lotion - Vanilla Cashmere, 24-Hour Moisture, 16 fl oz | Natural Shea Butter",
+      "category": "beauty-personal-care",
+      "price_cents": 899,
+      "rating": 4.7,
+      "rating_count": 51234,
+      "description": "Thick enough to matter in winter, thin enough to absorb before you put clothes on. Shea butter with a vanilla scent that fades rather than following you around all day.",
+      "key_info": [
+        "16 fl oz pump bottle",
+        "24-hour moisture from natural shea butter",
+        "Absorbs without leaving a greasy film",
+        "Dermatologist tested; no parabens or phthalates"
+      ],
+      "images": [
+        "products/eos-shea-better-body-lotion-vanilla-cashmere-1.svg",
+        "products/eos-shea-better-body-lotion-vanilla-cashmere-2.svg"
+      ]
+    },
+    {
+      "slug": "medicube-zero-pore-pad-2-0",
+      "title": "medicube Toner Pads Zero Pore Pad 2.0 for Exfoliation and Pore Care | Dual-Textured Facial Pad",
+      "category": "beauty-personal-care",
+      "price_cents": 2600,
+      "rating": 4.5,
+      "rating_count": 18902,
+      "description": "Pre-soaked pads with a textured side for sweeping and a smooth side for pressing in. Does the exfoliating-toner step in one pass, which is why people finish the tub.",
+      "key_info": [
+        "70 pads, pre-soaked in an exfoliating toner",
+        "Dual textured: embossed for sweeping, smooth for pressing",
+        "Formulated for pores and surface texture",
+        "Tub with tongs; use two or three times a week"
+      ],
+      "images": [
+        "products/medicube-zero-pore-pad-2-0-1.svg",
+        "products/medicube-zero-pore-pad-2-0-2.svg"
+      ]
+    },
+    {
+      "slug": "clean-skin-club-clean-towels-xl",
+      "title": "Clean Skin Club Clean Towels XL, 100% USDA Biobased Face Towel, Disposable Face Towelette, Eczema Safe",
+      "category": "beauty-personal-care",
+      "price_cents": 1699,
+      "rating": 4.7,
+      "rating_count": 62310,
+      "description": "Disposable face towels, which sounds excessive until you consider what a bathroom hand towel is carrying. Dry, biobased, and large enough to actually dry a face.",
+      "key_info": [
+        "50 XL disposable face towels per box",
+        "100% USDA biobased and biodegradable",
+        "Dry towels -- use with your own cleanser or water",
+        "Fragrance free; safe for eczema-prone skin"
+      ],
+      "images": [
+        "products/clean-skin-club-clean-towels-xl-1.svg",
+        "products/clean-skin-club-clean-towels-xl-2.svg"
+      ]
+    },
+    {
+      "slug": "amazon-essentials-cotton-swabs-500-count",
+      "title": "Amazon Essentials Cotton Swabs, 500 Count (Previously Amazon Basics)",
+      "category": "beauty-personal-care",
+      "price_cents": 349,
+      "rating": 4.7,
+      "rating_count": 35118,
+      "description": "Five hundred swabs on paper sticks that do not bend into uselessness halfway through. The cheap staple you only notice when you run out.",
+      "key_info": [
+        "500 double-tipped cotton swabs",
+        "Paper sticks rather than plastic",
+        "100% cotton tips, hypoallergenic",
+        "Resealable pack; previously sold as Amazon Basics"
+      ],
+      "images": [
+        "products/amazon-essentials-cotton-swabs-500-count-1.svg",
+        "products/amazon-essentials-cotton-swabs-500-count-2.svg"
+      ]
+    },
+    {
+      "slug": "bicycle-standard-playing-cards-2-pack",
+      "title": "Bicycle Playing Cards 2 Pack, Standard Poker Size, Red and Blue",
+      "category": "toys-games",
+      "price_cents": 534,
+      "rating": 5.0,
+      "rating_count": 1242,
+      "description": "The default deck, for good reason: air-cushion finish means they fan and shuffle rather than stick. Two decks, red and blue, so a table of six can play something.",
+      "key_info": [
+        "2 decks, standard poker size, one red and one blue",
+        "Air-cushion finish for smooth shuffling and dealing",
+        "Made in the USA from paper stock",
+        "Includes jokers and two blank cards per deck"
+      ],
+      "images": [
+        "products/bicycle-standard-playing-cards-2-pack-1.svg",
+        "products/bicycle-standard-playing-cards-2-pack-2.svg"
+      ]
+    },
+    {
+      "slug": "crayola-globbles-fidget-toy-6ct",
+      "title": "Crayola Globbles Fidget Toy (6ct), Sticky Stress Ball for Adults & Kids, Squishy Balls, Calming Sensory Gifts for Stress Relief",
+      "category": "toys-games",
+      "price_cents": 1199,
+      "rating": 4.5,
+      "rating_count": 13271,
+      "description": "Tacky little balls that stick to a wall, a window or each other and peel off without a mark. Six colours, and they are quiet, which matters in a classroom.",
+      "key_info": [
+        "6 Globbles in assorted colours",
+        "Tacky surface sticks to smooth walls and windows",
+        "Reusable -- rinse with water to restore the tack",
+        "Silent fidget; suitable for ages 4 and up"
+      ],
+      "images": [
+        "products/crayola-globbles-fidget-toy-6ct-1.svg",
+        "products/crayola-globbles-fidget-toy-6ct-2.svg"
+      ]
+    },
+    {
+      "slug": "bezente-latex-rainbow-balloons-100-pack",
+      "title": "Bezente Assorted Latex Rainbow Balloons 100 Pack, 12 inch",
+      "category": "toys-games",
+      "price_cents": 699,
+      "rating": 4.5,
+      "rating_count": 14360,
+      "description": "A hundred twelve-inch latex balloons in assorted colours, thick enough that inflating them is not a lottery. Works with air or helium.",
+      "key_info": [
+        "100 balloons, 12 inch, assorted rainbow colours",
+        "Thickened natural latex; low burst rate while inflating",
+        "Suitable for air or helium",
+        "Biodegradable latex"
+      ],
+      "images": [
+        "products/bezente-latex-rainbow-balloons-100-pack-1.svg",
+        "products/bezente-latex-rainbow-balloons-100-pack-2.svg"
+      ]
+    },
+    {
+      "slug": "partywoo-black-balloons-140pcs",
+      "title": "PartyWoo Black Balloons 140pcs Different Sizes of 18 12 10 5 Inch for Balloon Garland Arch Kit",
+      "category": "toys-games",
+      "price_cents": 899,
+      "rating": 4.5,
+      "rating_count": 9772,
+      "description": "Four sizes in one bag, which is what a balloon arch actually needs -- the small ones fill the gaps the big ones leave. Matte black, and the strip and glue dots are included.",
+      "key_info": [
+        "140 balloons across 18, 12, 10 and 5 inch sizes",
+        "Includes balloon strip tape and glue dots for garlands",
+        "Matte black finish, no printing",
+        "Thickened latex; inflate with air for arch builds"
+      ],
+      "images": [
+        "products/partywoo-black-balloons-140pcs-1.svg",
+        "products/partywoo-black-balloons-140pcs-2.svg"
+      ]
+    },
+    {
+      "slug": "piteno-halloween-spider-webs-1200-sqft",
+      "title": "Piteno 1200 sqft Spider Webs Halloween Decorations with 40 Fake Spiders, Stretchable Halloween Spider Webs",
+      "category": "toys-games",
+      "price_cents": 599,
+      "rating": 4.5,
+      "rating_count": 53,
+      "description": "Enough stretch cobweb to cover a porch and a hedge, with forty plastic spiders to make it read as deliberate. Pulls thin without tearing if you work it slowly.",
+      "key_info": [
+        "Covers roughly 1200 sq ft when fully stretched",
+        "40 fake spiders in assorted sizes included",
+        "Indoor and outdoor use; stretchable polyester fibre",
+        "Reusable if you pack it away dry"
+      ],
+      "images": [
+        "products/piteno-halloween-spider-webs-1200-sqft-1.svg",
+        "products/piteno-halloween-spider-webs-1200-sqft-2.svg"
+      ]
+    },
+    {
+      "slug": "kokodi-dinosaur-talking-pen-phonics-cards",
+      "title": "KOKODI Dinosaur Talking Pen with Phonics Cards, Autism Learning Toy for Toddlers",
+      "category": "toys-games",
+      "price_cents": 4999,
+      "rating": 4.6,
+      "rating_count": 954,
+      "description": "A reading pen shaped like a dinosaur: touch a card and it sounds the letter or word out. Screen-free, self-paced, and it repeats itself without ever getting tired.",
+      "key_info": [
+        "Talking pen plus a set of double-sided phonics cards",
+        "Covers letters, sounds, words, numbers and shapes",
+        "Screen free; volume control and auto sleep",
+        "Rechargeable over USB-C; for ages 2 and up"
+      ],
+      "images": [
+        "products/kokodi-dinosaur-talking-pen-phonics-cards-1.svg",
+        "products/kokodi-dinosaur-talking-pen-phonics-cards-2.svg"
+      ]
+    }
+  ]
+}

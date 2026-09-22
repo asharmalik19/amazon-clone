@@ -14,11 +14,13 @@ minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 2 — deployed skeleton.** The app is live in a container on Render,
-backed by managed Postgres, serving the shared page shell. Every later phase
-reaches the live URL just by being committed to `main`. The catalog, search,
-category nav and cart are not built yet, so those header controls are rendered
-visibly inert rather than as controls that do nothing.
+**Phase 3 — the catalog is in the database.** 51 products across 6 categories
+live in both databases, seeded from a committed file rather than fetched. The
+app is live in a container on Render backed by managed Postgres, and every later
+phase reaches the live URL just by being committed to `main`. Nothing renders
+the catalog yet — that is Phase 4 — so the landing page is still the shared page
+shell, and the search, category, cart and account controls in the header stay
+visibly inert until the phase that implements each one lands.
 
 ## Local setup
 
@@ -28,6 +30,25 @@ uv pip install -e ".[dev]"
 ```
 
 (Or `python3.12 -m venv .venv && .venv/bin/pip install -e ".[dev]"`.)
+
+## Seed the catalog
+
+```sh
+.venv/bin/python -m seed.seed
+```
+
+This creates the schema if it is absent and loads
+[`seed/products.json`](seed/products.json) — the single source of catalog truth.
+It is idempotent: running it again reports `catalog already up to date` and
+writes nothing, which is why the container runs it on every start. It is also
+convergent, so a product removed from the file is removed from the database.
+
+`--check` validates the file and writes nothing. The product images are locally
+generated SVG placeholders; regenerate them with
+`.venv/bin/python -m seed.make_placeholders` (`--check` reports any that are
+missing). No Amazon imagery is hotlinked or redistributed — see
+[specs/tech-stack.md](specs/tech-stack.md#catalog-data-source) for where the
+catalog data comes from.
 
 ## Run
 
@@ -72,6 +93,11 @@ All settings come from the environment with local-development defaults
 on the way in, so a provider's connection string works unedited.
 
 ## Deployment
+
+The container's start command seeds and then serves: `python -m seed.seed &&
+exec uvicorn …`. The seed is idempotent, so every restart re-runs it safely, and
+the `&&` means a catalog that cannot be written fails the deploy instead of
+bringing up an empty storefront.
 
 Hosting is Render, declared as infrastructure in [`render.yaml`](render.yaml):
 one Docker web service plus a managed Postgres instance, health-checked at

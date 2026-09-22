@@ -69,6 +69,7 @@ app/
 seed/
   products.json      # catalog seed data
   seed.py            # loads products.json into the DB (idempotent)
+  make_placeholders.py  # generates the local placeholder product images
 tests/
 specs/
 amazon_screenshots/  # visual reference, not shipped

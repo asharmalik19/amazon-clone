@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-label="Apple AirTag (2nd Generation): Tracker for Keychain, Wallet, and More; Locator with Sound; Simple One-Tap Setup with iPhone -- placeholder image 1 of 2">
+  <rect width="600" height="600" fill="#eef4fb"/>
+  <circle cx="300" cy="268" r="150" fill="#c9dcf0"/>
+  <text x="300" y="268" fill="#1f4e79" font-family="Helvetica, Arial, sans-serif" font-size="128" font-weight="700" text-anchor="middle" dominant-baseline="central">AA</text>
+  <text x="300" y="486" fill="#1f4e79" font-family="Helvetica, Arial, sans-serif" font-size="26" text-anchor="middle" opacity="0.75">view 1 of 2</text>
+</svg>
