@@ -3,9 +3,11 @@
   grid, search results and category pages all call this macro, so a product looks the
   same everywhere and a fix to the tile is a fix on every screen.
 
-  The tile is not a link yet. Phase 5 builds the detail page and flips
-  `features.product_detail`, which turns the image and title into links to it; until
-  then nothing here invites a click it cannot honour.
+  The image and the title both link to the detail page. The image's anchor is hidden
+  from assistive tech and taken out of the tab order on purpose: it is the same
+  destination as the title link right below it, and announcing it twice would make every
+  tile two stops instead of one. The `features.product_detail` guard stays because it is
+  what kept the tile from offering a link before Phase 5 existed.
 #}
 {% from "components/price.html" import price with context %}
 {% from "components/stars.html" import stars with context %}

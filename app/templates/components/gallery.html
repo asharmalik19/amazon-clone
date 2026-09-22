@@ -1,0 +1,62 @@
+{#
+  The product gallery: one large image plus a rail of thumbnails that switch it.
+
+  Each thumbnail is an ordinary link back to the same page with a different `?image=`,
+  so the gallery works with JavaScript disabled, is keyboard-reachable for free, and
+  every view of the product has its own shareable URL. The selected thumbnail is not a
+  link to itself -- it is the current state, marked with `aria-current`.
+
+  The rail sits below the image on a phone and to its left from `sm` up, which is why
+  the DOM order is rail-then-stage with a reversed column: it keeps the thumbnails
+  before the large image in the tab order on both layouts.
+#}
+
+{% macro gallery(product, selected) -%}
+{% set total = product.images | length %}
+<div class="flex flex-col-reverse gap-3 sm:flex-row">
+
+  {% if total > 1 %}
+  <ul class="flex shrink-0 justify-center gap-2 sm:flex-col sm:justify-start" aria-label="Product images">
+    {% for image in product.images %}
+    {% set is_selected = loop.index == selected %}
+    <li>
+      {% if is_selected %}
+      <span aria-current="true"
+            class="grid h-12 w-12 place-items-center rounded border-2 border-amz-link bg-white p-0.5">
+      {% else %}
+      <a href="/product/{{ product.slug }}?image={{ loop.index }}"
+         aria-label="Show image {{ loop.index }} of {{ total }}"
+         class="grid h-12 w-12 place-items-center rounded border border-neutral-300 bg-white p-0.5
+                hover:border-amz-link focus-visible:outline-2 focus-visible:outline-offset-2
+                focus-visible:outline-amz-link">
+      {% endif %}
+        <img src="{{ url_for('static', path=image.path) }}" alt="" aria-hidden="true"
+             loading="lazy" decoding="async"
+             class="h-full w-full object-contain mix-blend-multiply">
+      {% if is_selected %}</span>{% else %}</a>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {# A fixed height rather than a square aspect ratio: the stage is as wide as the
+     column it is in, and a square would make the image the tallest thing on a phone by
+     far -- the title and price would start below the fold. The image is centred and
+     contained inside it, so nothing is cropped at any width. #}
+  <div class="relative h-[300px] min-w-0 grow rounded bg-white sm:h-[420px] lg:h-[460px]">
+    {% set current = product.images[selected - 1] %}
+    {# The alt text carries the position because the thumbnails are decorative: without
+       it, a screen reader following "show image 2 of 3" lands on a picture that sounds
+       identical to the one before it. #}
+    <img src="{{ url_for('static', path=current.path) }}"
+         alt="{{ product.title }}{% if total > 1 %} — image {{ selected }} of {{ total }}{% endif %}"
+         decoding="async"
+         {# Absolutely positioned inside the stage on purpose. A percentage height on a
+            centred grid or flex item resolves against an indefinite grid area, so the
+            image kept its intrinsic 600px and spilled out of the box; `inset-0` against
+            a positioned parent with a definite height resolves exactly, and
+            `object-contain` letterboxes the image inside it without cropping. #}
+         class="absolute inset-0 h-full w-full p-4 object-contain mix-blend-multiply">
+  </div>
+</div>
+{%- endmacro %}

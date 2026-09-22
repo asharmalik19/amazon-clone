@@ -14,18 +14,24 @@ minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 4 — the landing page shows the catalog.** The first real screen: all 51
-products in a responsive grid, each tile showing its image, title, price and
-star rating. One component renders a product card, and it is the only way a
-product is ever drawn, so search results and category pages will inherit the
-same tile. Prices are formatted from integer cents; a partial rating is drawn as
-a partial star rather than rounded.
+**Phase 5 — the product detail page.** Every tile on the landing page now opens
+a full detail page at `/product/{slug}`: image gallery, title, price, rating and
+count, description, and the "About this item" bullets. The gallery's thumbnails
+are ordinary links that set `?image=N`, so switching images works with
+JavaScript disabled and every view has its own shareable URL; a bogus `?image=`
+shows the product's first image rather than an error. An unknown slug gets a
+styled 404 that offers the catalog instead of a dead end.
 
-Tiles do not link anywhere yet — the product detail page is Phase 5 — and the
-search, category, cart and account controls in the header stay visibly inert
-until the phase that implements each one lands. The app is live in a container
-on Render backed by managed Postgres, so every phase reaches the live URL just
-by being committed to `main`.
+The page shows only what the catalog actually knows — no invented stock,
+delivery date or seller. Quantity selection and Add to Cart are Phase 8, so the
+buy box says so plainly, and the search, category, cart and account controls in
+the header stay visibly inert until the phase that implements each one lands.
+
+Behind it: all 51 products in a responsive grid, rendered by the single product
+card component that every later screen reuses, with prices formatted from
+integer cents and partial ratings drawn as partial stars. The app is live in a
+container on Render backed by managed Postgres, so every phase reaches the live
+URL just by being committed to `main`.
 
 ## Local setup
 

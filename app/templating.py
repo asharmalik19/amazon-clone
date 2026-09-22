@@ -15,7 +15,7 @@ templates.env.globals["site_name"] = get_settings().site_name
 # Controls stay visibly inert until the phase that implements them lands, so no screen
 # ever shows a control that does nothing. Each flag flips in exactly one phase.
 templates.env.globals["features"] = {
-    "product_detail": False,  # Phase 5
+    "product_detail": True,  # Phase 5
     "search": False,  # Phase 6
     "categories": False,  # Phase 7
     "cart": False,  # Phase 8

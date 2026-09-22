@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "components/gallery.html" import gallery with context %}
+{% from "components/price.html" import price with context %}
+{% from "components/stars.html" import stars with context %}
+
+{% block title %}{{ product.title | truncate(80) }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+{# Amazon's detail page is three columns from `lg` up: gallery, the product's own
+   column, and the buy box. Below that it stacks, gallery first, because on a phone the
+   image is what a shopper looks at before anything else. #}
+<div class="grid grid-cols-1 gap-6 rounded bg-white p-4 lg:grid-cols-12 lg:gap-8">
+
+  <!-- Gallery -->
+  <div class="lg:col-span-5">{{ gallery(product, selected_image) }}</div>
+
+  <!-- The product itself -->
+  <div class="lg:col-span-4">
+    <p class="text-neutral-600">
+      {# Category browsing is Phase 7. Until it exists this says where the product sits
+         without offering a link that would 404. #}
+      in {{ product.category.name }}
+    </p>
+
+    <h1 class="mt-1 text-[24px] font-normal leading-8">{{ product.title }}</h1>
+
+    <div class="mt-2 flex flex-wrap items-center gap-2 border-b border-neutral-200 pb-3">
+      {{ stars(product.rating, product.rating_count) }}
+      <span class="text-neutral-600" aria-hidden="true">ratings</span>
+    </div>
+
+    {# The price belongs in the buy box, but the buy box is the third column and on a
+       phone that lands below the bullet list -- too far from the title to be the first
+       thing a shopper sees. So it is rendered here below `lg` and there from `lg` up;
+       exactly one of the two is ever displayed, so neither a person nor a screen reader
+       meets the price twice. #}
+    <div class="mt-3 lg:hidden">{{ price(product.price_cents) }}</div>
+
+    <p class="mt-3 leading-5 text-neutral-800">{{ product.description }}</p>
+
+    <h2 class="mt-5 text-[16px] font-bold">About this item</h2>
+    <ul class="mt-2 list-disc space-y-1.5 pl-5 leading-5 text-neutral-800">
+      {% for point in product.key_info %}
+      <li>{{ point }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Buy box. The price is real; the controls below it are not built yet and say so. -->
+  <div class="lg:col-span-3">
+    <div class="rounded border border-neutral-300 p-4">
+      <div class="hidden lg:block">{{ price(product.price_cents) }}</div>
+
+      {% if features.cart %}
+      {% block buy_box %}{% endblock %}
+      {% else %}
+      <p class="mt-4 rounded bg-amz-page px-3 py-2 text-neutral-600">
+        Quantity selection and Add to Cart arrive in a later build.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<p class="mt-4">
+  <a href="/" class="text-amz-link hover:text-amz-cta-hover hover:underline">
+    ← Back to the catalog
+  </a>
+</p>
+{% endblock %}

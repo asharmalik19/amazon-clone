@@ -75,9 +75,10 @@ def test_the_grid_is_responsive(body):
     assert "xl:grid-cols-5" in body
 
 
-def test_cards_do_not_link_anywhere_yet(body):
-    """The detail page is Phase 5. Until it exists, no tile may offer a link to it."""
-    assert "/product/" not in body
+def test_a_card_is_one_tab_stop_not_two(body, catalog):
+    """Phase 5 made the tile clickable. The image and the title share a destination, so
+    only the title is announced -- otherwise every tile is two identical stops."""
+    assert body.count('tabindex="-1" aria-hidden="true"') == len(catalog["products"])
 
 
 def test_an_empty_catalog_gets_an_empty_state_not_a_blank_page(empty_client):
