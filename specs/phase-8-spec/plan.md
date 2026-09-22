@@ -39,11 +39,13 @@ Task groups in order. Each group is committable; the phase is done when
    defaulting to 1.
 2. Replace the placeholder block in `product_detail.html` with a real form:
    `method="post" action="/cart/add"`, hidden `slug`, plus
-   `hx-post="/cart/add" hx-target="#cart-count" hx-swap="outerHTML"`, Amazon-orange
-   CTA.
-3. `fragments/cart_added.html` — the header count plus an out-of-band swap rendering
-   the inline "✓ Added to cart — View cart (N)" confirmation into a region on the
-   detail page.
+   `hx-post="/cart/add" hx-target="#cart-status" hx-swap="innerHTML"`, Amazon-orange
+   CTA. One response has to update two places, so the targeted swap is the
+   confirmation region and the header badge rides along out of band.
+3. `fragments/cart_added.html` — the inline "✓ Added to cart — View cart (N)"
+   confirmation swapped into `#cart-status`, plus the header count re-rendered with
+   `hx-swap-oob="true"`. The badge is a macro shared with the header, so the two
+   cannot disagree about how a count looks.
 
 ## 5. `POST /cart/add`
 
