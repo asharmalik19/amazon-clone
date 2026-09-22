@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}{{ heading }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+{#
+  One page for every failure: the 404 behind a stale link, the 400 behind a hand-built
+  request, and the 500 behind a crash. They differ only in the sentence at the top and
+  the one under it, both written by app/errors.py -- so a shopper who hits the rare one
+  gets the same finished screen as a shopper who hits the common one, and there is no
+  second error page to keep in step with this one.
+
+  The status code is printed small: a person can ignore it, and somebody reporting the
+  problem has the one detail worth quoting. The offer of the catalog is the point of the
+  page -- a dead end that only apologises is still a dead end.
+#}
+<section class="mx-auto max-w-2xl rounded bg-white p-6 text-center shadow-sm">
+  <h1 class="text-2xl font-bold">{{ heading }}</h1>
+  <p class="mt-3 text-neutral-700">{{ note }}</p>
+  <p class="mt-5">
+    <a href="/" class="inline-block rounded bg-amz-cta px-6 py-2 font-medium text-neutral-900
+                       hover:bg-amz-cta-hover">
+      Back to the catalog
+    </a>
+  </p>
+  <p class="mt-4 text-[11px] text-neutral-500">Error {{ status_code }}</p>
+</section>
+{% endblock %}

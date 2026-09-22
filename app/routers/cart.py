@@ -123,8 +123,8 @@ async def add(
         # Unreachable from the rendered page -- the picker is a `<select>` of exactly
         # the values this accepts -- so this is a hand-built or replayed request. It is
         # refused rather than clamped: guessing at what a malformed quantity meant is
-        # how a shopper ends up with something they did not choose. Phase 13 gives the
-        # non-404 error surface a styled page; until then this is a bare 400.
+        # how a shopper ends up with something they did not choose. It reaches the
+        # shopper as the styled 400 page, with this sentence on it (app/errors.py).
         raise HTTPException(
             status_code=400,
             detail=f"Choose a quantity between 1 and {MAX_ADD_QUANTITY}.",

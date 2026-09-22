@@ -21,7 +21,7 @@
   <span>
     Added to cart{% if item.quantity > 1 %} &mdash; {{ item.quantity }} in your cart{% endif %}.
   </span>
-  <a href="/cart" class="text-amz-link underline hover:text-amz-cta-hover">
+  <a href="/cart" class="text-amz-link underline hover:text-amz-link-hover">
     View cart ({{ cart_count }} item{{ "" if cart_count == 1 else "s" }})
   </a>
 </p>

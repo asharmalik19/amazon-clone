@@ -10,10 +10,11 @@
   could be triggered by a link is a sign-out any other site's `<img>` tag can trigger for
   you.
 
-  `user` may be `none`, meaning either "signed out" or "this page did not ask" -- the 404
-  is the one screen with no shell context. Both render as the signed-out state, which is
-  the safe way round: offering the sign-in form to somebody who is signed in costs them a
-  click, while claiming they are signed in when the page does not know would be a lie.
+  `user` may be `none`, meaning either "signed out" or "this page did not ask" -- the
+  error pages are the screens with no shell context. Both render as the signed-out state,
+  which is the safe way round: offering the sign-in form to somebody who is signed in
+  costs them a click, while claiming they are signed in when the page does not know
+  would be a lie.
 #}
 
 {% macro account_menu(user) -%}

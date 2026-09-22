@@ -6,8 +6,8 @@ importing another router to get at its queries is the kind of knot that only tig
 
 The list is passed explicitly into each template context rather than injected by a
 context processor or middleware. That costs one line per route and buys two things: a
-page that has no business showing a category bar (the 404) simply does not get one, and
-a test that swaps the database out from under the app through FastAPI's dependency
+page that has no business showing a category bar (an error page) simply does not get one,
+and a test that swaps the database out from under the app through FastAPI's dependency
 overrides swaps the nav out with it, instead of quietly reading the real catalog.
 """
 

@@ -41,7 +41,7 @@
 
   <div class="flex min-w-0 grow flex-col gap-1">
     <h2 class="text-[16px] leading-5">
-      <a href="/product/{{ product.slug }}" class="line-clamp-2 hover:text-amz-cta-hover hover:underline">
+      <a href="/product/{{ product.slug }}" class="line-clamp-2 hover:text-amz-link-hover hover:underline">
         {{ product.title }}
       </a>
     </h2>
@@ -73,7 +73,7 @@
             hx-post="/cart/remove" hx-target="#cart-contents" hx-swap="outerHTML">
         <input type="hidden" name="slug" value="{{ product.slug }}">
         <button type="submit"
-                class="text-amz-link hover:text-amz-cta-hover hover:underline
+                class="text-amz-link hover:text-amz-link-hover hover:underline
                        focus:outline-3 focus:outline-amz-link">
           Delete
           {#- The visible label is the short one Amazon uses; the accessible name says

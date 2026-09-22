@@ -18,6 +18,12 @@
       --color-amz-nav-hover: #37475a;
       --color-amz-cta: #febd69;
       --color-amz-cta-hover: #f3a847;
+      /* The rust every text link turns on hover, and the orange of a filled star. Both
+         are sampled from amazon_screenshots/ rather than guessed: the amber above is a
+         button fill, and it was doing duty as a link hover at about 1.9:1 against white,
+         which is a hover state a shopper cannot see. */
+      --color-amz-link-hover: #c7511f;
+      --color-amz-star: #fc6202;
       --color-amz-page: #eaeded;
       --color-amz-link: #007185;
       --color-amz-foot: #131a22;
@@ -92,10 +98,11 @@
 
       <div class="order-3 ml-auto flex shrink-0 items-center sm:order-4 sm:ml-0">
         {% if features.account %}
-          {#- `current_user` comes from `shell()`, so it is undefined on the 404 page --
-              the one screen with no shell context. That renders the signed-out state,
-              which is a link to the sign-in form: correct for a stranger, and a click
-              rather than a lie for somebody who is signed in. #}
+          {#- `current_user` comes from `shell()`, so it is undefined on the error pages --
+              the screens with no shell context, because a page that exists to report a
+              failure must not query the database that may be the failure. That renders
+              the signed-out state, which is a link to the sign-in form: correct for a
+              stranger, and a click rather than a lie for somebody who is signed in. #}
           {{ account_menu(current_user | default(none)) }}
         {% else %}
           <span class="cursor-not-allowed rounded px-2 py-1 text-neutral-400"
@@ -106,8 +113,8 @@
         {% endif %}
 
         {% if features.cart %}
-          {#- `cart_count` comes from `shell()`, so it is undefined on the 404 page --
-              the one screen with no shell context. The badge is left off there rather
+          {#- `cart_count` comes from `shell()`, so it is undefined on the error pages --
+              the screens with no shell context. The badge is left off there rather
               than guessed at; see components/cart_link.html. #}
           {{ cart_link(cart_count | default(none)) }}
         {% else %}
