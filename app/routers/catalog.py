@@ -157,7 +157,7 @@ async def home(request: Request, db: DbSession):
     return templates.TemplateResponse(
         request,
         "home.html",
-        {"products": list_products(db)} | shell(db, nav_active=NAV_ALL),
+        {"products": list_products(db)} | shell(db, request, nav_active=NAV_ALL),
     )
 
 
@@ -181,7 +181,7 @@ async def category_page(request: Request, db: DbSession, slug: str):
         }
         # The search box is scoped to this shelf while a shopper is standing in front of
         # it, so typing into it searches here rather than starting over.
-        | shell(db, nav_active=category.slug, search_category=category),
+        | shell(db, request, nav_active=category.slug, search_category=category),
     )
 
 
@@ -225,5 +225,5 @@ async def search(
             # are no matches to count, so counting them would be one query for nothing.
             "match_counts": search_counts_by_category(db, query) if query else {},
         }
-        | shell(db, nav_active=shelf.slug if shelf else None, search_category=shelf),
+        | shell(db, request, nav_active=shelf.slug if shelf else None, search_category=shelf),
     )

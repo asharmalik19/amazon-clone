@@ -1,0 +1,39 @@
+{#
+  The header's cart: the icon that gets a shopper to `/cart`, and the badge saying how
+  much is in it.
+
+  The badge is its own macro because two places render it -- this link on a full page
+  load, and the fragment an add-to-cart returns -- and a count that disagreed with
+  itself between the two would be worse than no badge at all. `id="cart-count"` is the
+  handle HTMX swaps it by, so it lives here next to the markup it names.
+
+  `count` may be `None`, meaning "this page did not ask the database". The badge is then
+  omitted rather than drawn as zero: a page that does not know what is in the cart
+  should not claim it is empty. That is the 404 page, which has no shell context.
+#}
+
+{% macro cart_count_badge(count, oob=false) -%}
+<span id="cart-count" {% if oob %}hx-swap-oob="true"{% endif %}
+      class="absolute left-4 top-0 min-w-4 text-center text-[14px] font-bold text-amz-cta">
+  {%- if count is not none %}{{ count }}{% endif -%}
+</span>
+{%- endmacro %}
+
+{% macro cart_link(count) -%}
+<a href="/cart" class="flex items-end gap-1 rounded border border-transparent px-2 py-1
+                       hover:border-white/70">
+  {#- One accessible name for the whole control, so a screen reader hears "Cart, 3
+      items" instead of the bare number floating over an unlabelled icon. #}
+  <span class="sr-only">
+    Cart{% if count is not none %}, {{ count }} item{{ "" if count == 1 else "s" }}{% endif %}
+  </span>
+  <span class="relative" aria-hidden="true">
+    <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M2 4h3l2.6 10.4A2 2 0 0 0 9.5 16h8.2a2 2 0 0 0 1.9-1.4L22 7H6"/>
+      <circle cx="10" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/>
+    </svg>
+    {{ cart_count_badge(count) }}
+  </span>
+  <span class="font-bold" aria-hidden="true">Cart</span>
+</a>
+{%- endmacro %}

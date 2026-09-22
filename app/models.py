@@ -1,8 +1,8 @@
 """The catalog schema: one model layer that runs on SQLite and Postgres alike.
 
-Phase 3 owns the catalog only -- `Category`, `Product`, `ProductImage`. `User`, `Cart`
-and `CartItem` arrive with the phases that actually use them, so nothing here is a
-table waiting for a feature that may never land.
+Phase 3 owned the catalog -- `Category`, `Product`, `ProductImage` -- and Phase 8 adds
+the cart that hangs off it. `User` arrives with the phase that actually uses it, so
+nothing here is a table waiting for a feature that may never land.
 
 Two conventions hold everywhere in this file:
 
@@ -15,14 +15,18 @@ Two conventions hold everywhere in this file:
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from sqlalchemy import (
     CheckConstraint,
+    DateTime,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -125,3 +129,98 @@ class ProductImage(Base):
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"<ProductImage {self.path}>"
+
+
+class Cart(Base):
+    """One shopper's basket.
+
+    A cart belongs either to a signed-in user or to an anonymous visitor identified by
+    the opaque `session_token` in their cookie -- never to both, and never to neither.
+    `user_id` is nullable and unused until Phase 11 brings accounts; the column is here
+    now because Phase 12 merges an anonymous cart into a user's, and a nullable column
+    added with the table is cheaper than a schema change in a project with no migrations.
+
+    Rows are created lazily, by the first add to cart. A visitor who only browses has no
+    cart row and no cookie, so this table counts baskets rather than page views.
+    """
+
+    __tablename__ = "carts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # No `users` foreign key yet -- that table does not exist until Phase 11, and a
+    # constraint pointing at a missing table would fail `create_all` today.
+    user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    # The signed value in the shopper's cookie is derived from this; the signature is
+    # never stored, so a leaked database row cannot be replayed as a valid cookie.
+    session_token: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, unique=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    items: Mapped[list[CartItem]] = relationship(
+        back_populates="cart",
+        cascade="all, delete-orphan",
+        # Stable order, so a line does not jump around the cart page between two
+        # requests. Insertion order is also the order a shopper added things in, which
+        # is the order they expect to read them back in.
+        order_by="CartItem.id",
+    )
+
+    @property
+    def item_count(self) -> int:
+        """Total units in the cart -- what the header badge counts.
+
+        Units, not lines: a shopper who added three of one thing has three items in
+        their cart, which is what Amazon's badge says and what the subtotal line repeats.
+        """
+        return sum(item.quantity for item in self.items)
+
+    @property
+    def subtotal_cents(self) -> int:
+        """The cart's total, in integer cents.
+
+        Summed from the line totals, which are themselves integer arithmetic, so the
+        number shown to a shopper is exact rather than nearly right. No float touches a
+        price here or anywhere else in this file.
+        """
+        return sum(item.line_total_cents for item in self.items)
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<Cart {self.id}>"
+
+
+class CartItem(Base):
+    """One product in one cart, with how many of it the shopper wants."""
+
+    __tablename__ = "cart_items"
+    __table_args__ = (
+        # One line per product per cart: adding a product already in the cart raises its
+        # quantity. Two lines for the same product would show a shopper two prices for
+        # one thing and leave "remove it" ambiguous, so the database refuses it outright
+        # rather than trusting every write path to remember.
+        UniqueConstraint("cart_id", "product_id", name="uq_cart_item_product"),
+        # A line of zero is a line that should have been deleted, and a negative one
+        # would subtract from the subtotal. Both are corrupt data, not edge cases.
+        CheckConstraint("quantity >= 1", name="ck_cart_items_quantity_positive"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    cart_id: Mapped[int] = mapped_column(ForeignKey("carts.id"), index=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
+    quantity: Mapped[int] = mapped_column(Integer)
+
+    cart: Mapped[Cart] = relationship(back_populates="items")
+    product: Mapped[Product] = relationship()
+
+    @property
+    def line_total_cents(self) -> int:
+        """What this line costs: the unit price times the quantity, in integer cents.
+
+        The multiplication happens here rather than in the template because it is money:
+        the template's job is to format a number of cents, and its only arithmetic is the
+        integer division that splits the dollars from the cents.
+        """
+        return self.product.price_cents * self.quantity
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<CartItem cart={self.cart_id} product={self.product_id}>"

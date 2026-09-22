@@ -200,10 +200,12 @@ def test_an_unknown_page_gets_the_same_styled_404(client):
     assert "We could not find that page." in response.text
 
 
-def test_the_buy_box_says_the_cart_is_not_built_yet(page):
-    """Phase 8 builds it. Until then it is visibly inert rather than absent or fake."""
-    assert "Quantity selection and Add to Cart arrive in a later build." in page
-    assert 'action="/cart/add"' not in page
+def test_the_buy_box_offers_a_quantity_and_an_add_to_cart(page, product):
+    """Phase 8 built it, so the placeholder it replaced must be gone from the page."""
+    assert "Quantity selection and Add to Cart arrive in a later build." not in page
+    assert 'action="/cart/add"' in page
+    assert f'<input type="hidden" name="slug" value="{product["slug"]}">' in page
+    assert "Add to Cart" in page
 
 
 def test_the_detail_page_survives_an_empty_catalog(empty_client, product):

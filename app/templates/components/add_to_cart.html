@@ -1,0 +1,37 @@
+{#
+  The buy box's one control: pick a quantity, add it to the cart.
+
+  It is a real `<form method="post" action="/cart/add">` with HTMX layered on top, which
+  is the whole no-JavaScript story in one element. With script, HTMX posts it and swaps
+  two small pieces of the page -- the header badge and the confirmation below the button
+  -- so a shopper who is still deciding stays on the product. Without script, the
+  browser posts the same form to the same URL and follows the 303 to `/cart`: a
+  different journey, not a broken button.
+
+  `hx-target` is the confirmation region and `hx-swap="innerHTML"`; the header badge
+  rides along as an out-of-band swap in the response (see fragments/cart_added.html).
+  The region is `aria-live="polite"` and always present in the DOM, because a live
+  region has to exist *before* the text lands in it to be announced at all.
+#}
+{% from "components/qty_picker.html" import qty_picker with context %}
+
+{% macro add_to_cart(product, max_quantity) -%}
+<form action="/cart/add" method="post"
+      hx-post="/cart/add" hx-target="#cart-status" hx-swap="innerHTML"
+      class="mt-4">
+  <input type="hidden" name="slug" value="{{ product.slug }}">
+
+  <div class="flex items-center justify-between gap-2">
+    {{ qty_picker(max_quantity) }}
+  </div>
+
+  <button type="submit"
+          class="mt-3 w-full rounded-full bg-amz-cta px-4 py-2 font-medium text-neutral-900
+                 shadow-sm hover:bg-amz-cta-hover focus:outline-3 focus:outline-offset-2
+                 focus:outline-amz-link">
+    Add to Cart
+  </button>
+</form>
+
+<div id="cart-status" role="status" aria-live="polite"></div>
+{%- endmacro %}

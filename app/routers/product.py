@@ -73,5 +73,5 @@ async def product_detail(
         # is the page being looked at. The breadcrumb above the title is the link to its
         # category. The search box is scoped to that category all the same -- a shopper
         # searching from a product page is almost always looking for its neighbours.
-        | shell(db, search_category=product.category),
+        | shell(db, request, search_category=product.category),
     )

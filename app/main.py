@@ -12,7 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import BASE_DIR, get_settings
 from app.db import create_schema, get_engine
-from app.routers import catalog, product
+from app.routers import cart, catalog, product
 from app.templating import templates
 
 # Uvicorn configures its own loggers and leaves the root logger bare, so an application
@@ -67,6 +67,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 app.include_router(catalog.router)
 app.include_router(product.router)
+app.include_router(cart.router)
 
 
 # FastAPI's default 404 is a JSON body, which is the wrong answer for a storefront a

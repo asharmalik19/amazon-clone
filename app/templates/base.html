@@ -1,3 +1,4 @@
+{% from "components/cart_link.html" import cart_link with context -%}
 {% from "components/category_nav.html" import category_nav with context -%}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -100,7 +101,10 @@
         {% endif %}
 
         {% if features.cart %}
-          {% block cart_link %}{% endblock %}
+          {#- `cart_count` comes from `shell()`, so it is undefined on the 404 page --
+              the one screen with no shell context. The badge is left off there rather
+              than guessed at; see components/cart_link.html. #}
+          {{ cart_link(cart_count | default(none)) }}
         {% else %}
           <span class="flex cursor-not-allowed items-end gap-1 rounded px-2 py-1 text-neutral-400"
                 title="The cart arrives in a later build">

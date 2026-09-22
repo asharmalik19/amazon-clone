@@ -1,0 +1,53 @@
+{#
+  One line of the cart: the product, how many of it, and what that costs.
+
+  Deliberately *not* `product_card.html`. The card is a tile in a grid answering "is
+  this the thing I want?"; a cart line is a row answering "is this what I am buying?" --
+  different shape, different information, and it carries a quantity the card knows
+  nothing about. Bending the card to be both is what would make both worse, so the card
+  stays the only way a product is *browsed* and this is the only way one is *listed*.
+
+  The rating is left off for the same reason: a shopper who has put the thing in their
+  cart has finished evaluating it.
+
+  Quantity is text, not a control. Changing it and removing the line are Phase 9's, and
+  a phase does not leave behind a control that does nothing.
+#}
+{% from "components/price.html" import price with context %}
+
+{% macro cart_line(item) -%}
+{% set product = item.product %}
+<li class="flex gap-4 border-b border-neutral-200 py-4 last:border-b-0">
+
+  <a href="/product/{{ product.slug }}" tabindex="-1" aria-hidden="true"
+     class="w-24 shrink-0 sm:w-32">
+    <div class="grid aspect-square place-items-center">
+      <img src="{{ url_for('static', path=product.primary_image.path) }}"
+           alt="" loading="lazy" decoding="async"
+           class="max-h-full max-w-full object-contain mix-blend-multiply">
+    </div>
+  </a>
+
+  <div class="flex min-w-0 grow flex-col gap-1">
+    <h2 class="text-[16px] leading-5">
+      <a href="/product/{{ product.slug }}" class="line-clamp-2 hover:text-amz-cta-hover hover:underline">
+        {{ product.title }}
+      </a>
+    </h2>
+    <p class="text-neutral-600">
+      {{ product.category.name }}
+    </p>
+    <p>
+      Quantity: <span class="font-bold">{{ item.quantity }}</span>
+      {#- The unit price is repeated next to the quantity because the number on the
+          right is the line total, and a shopper checking their cart is entitled to see
+          the multiplication rather than take it on trust. #}
+      <span class="text-neutral-600">
+        &times; ${{ "{:,}".format(product.price_cents // 100) }}.{{ "%02d" | format(product.price_cents % 100) }} each
+      </span>
+    </p>
+  </div>
+
+  <div class="shrink-0 text-right">{{ price(item.line_total_cents) }}</div>
+</li>
+{%- endmacro %}

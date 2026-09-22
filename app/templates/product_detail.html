@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/add_to_cart.html" import add_to_cart with context %}
 {% from "components/gallery.html" import gallery with context %}
 {% from "components/price.html" import price with context %}
 {% from "components/stars.html" import stars with context %}
@@ -48,13 +49,13 @@
     </ul>
   </div>
 
-  <!-- Buy box. The price is real; the controls below it are not built yet and say so. -->
+  <!-- Buy box: the price, then the one control that does something with it. -->
   <div class="lg:col-span-3">
     <div class="rounded border border-neutral-300 p-4">
       <div class="hidden lg:block">{{ price(product.price_cents) }}</div>
 
       {% if features.cart %}
-      {% block buy_box %}{% endblock %}
+      {{ add_to_cart(product, max_add_quantity) }}
       {% else %}
       <p class="mt-4 rounded bg-amz-page px-3 py-2 text-neutral-600">
         Quantity selection and Add to Cart arrive in a later build.
