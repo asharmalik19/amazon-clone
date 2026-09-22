@@ -1,0 +1,21 @@
+{#
+  The only place a price is ever formatted. Takes `cents` -- an integer, always.
+
+  Amazon's price typography is a small superscript currency symbol, a large whole part,
+  and small superscript cents. That reads well but spells the number out of order for a
+  screen reader, so the plain amount is rendered for assistive tech and the stylised
+  version is hidden from it.
+
+  Integer division and modulo only: no float ever touches a price, here or anywhere.
+#}
+{% macro price(cents) -%}
+{% set whole = cents // 100 %}{% set fraction = "%02d" | format(cents % 100) -%}
+<span class="whitespace-nowrap leading-none text-neutral-900">
+  <span class="sr-only">${{ "{:,}".format(whole) }}.{{ fraction }}</span>
+  <span aria-hidden="true">
+    <span class="align-super text-[11px]">$</span><!--
+    --><span class="text-[21px] font-medium">{{ "{:,}".format(whole) }}</span><!--
+    --><span class="align-super text-[11px]">{{ fraction }}</span>
+  </span>
+</span>
+{%- endmacro %}

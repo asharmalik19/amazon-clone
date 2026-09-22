@@ -14,13 +14,18 @@ minute while the service wakes up. See [Deployment](#deployment).
 
 ## Current state
 
-**Phase 3 — the catalog is in the database.** 51 products across 6 categories
-live in both databases, seeded from a committed file rather than fetched. The
-app is live in a container on Render backed by managed Postgres, and every later
-phase reaches the live URL just by being committed to `main`. Nothing renders
-the catalog yet — that is Phase 4 — so the landing page is still the shared page
-shell, and the search, category, cart and account controls in the header stay
-visibly inert until the phase that implements each one lands.
+**Phase 4 — the landing page shows the catalog.** The first real screen: all 51
+products in a responsive grid, each tile showing its image, title, price and
+star rating. One component renders a product card, and it is the only way a
+product is ever drawn, so search results and category pages will inherit the
+same tile. Prices are formatted from integer cents; a partial rating is drawn as
+a partial star rather than rounded.
+
+Tiles do not link anywhere yet — the product detail page is Phase 5 — and the
+search, category, cart and account controls in the header stay visibly inert
+until the phase that implements each one lands. The app is live in a container
+on Render backed by managed Postgres, so every phase reaches the live URL just
+by being committed to `main`.
 
 ## Local setup
 

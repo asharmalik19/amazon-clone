@@ -2,7 +2,9 @@
 
 from collections.abc import Iterator
 from functools import lru_cache
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -50,6 +52,11 @@ def get_db() -> Iterator[Session]:
         yield session
     finally:
         session.close()
+
+
+# What a route annotates its session parameter with: `db: DbSession`. One alias means a
+# route never repeats the wiring, and a test can override `get_db` in one place.
+DbSession = Annotated[Session, Depends(get_db)]
 
 
 def create_schema(engine: Engine | None = None) -> None:

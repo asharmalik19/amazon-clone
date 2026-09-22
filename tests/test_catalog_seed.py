@@ -19,12 +19,6 @@ from seed.seed import STATIC_DIR, SeedError, load_catalog, seed
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-@pytest.fixture(scope="module")
-def catalog() -> dict:
-    """The real committed catalog file -- the thing production actually seeds."""
-    return load_catalog()
-
-
 @pytest.fixture
 def db(tmp_path) -> Session:
     """An empty database of its own, created from the models, for one test."""

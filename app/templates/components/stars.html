@@ -1,0 +1,35 @@
+{#
+  A 4.6 rating is not four stars and it is not five, so the row is drawn twice: a grey
+  row underneath, and an amber row on top clipped to the exact fraction. That renders a
+  partial star truthfully with no image assets and no rounding lie.
+
+  `rating` is display data (see app/models.py), so the fraction may be a float here --
+  unlike a price, a star row is never summed.
+
+  Two rows of identical glyphs would read as ten stars to a screen reader, so both are
+  hidden from it and the wrapper carries the sentence a person actually wants.
+#}
+{% set star_path = "M10 1 12.7 7.1 19.3 7.8 14.4 12.3 15.8 18.8 10 15.5 4.2 18.8 5.6 12.3 0.7 7.8 7.3 7.1Z" %}
+
+{% macro _row(colour) -%}
+<svg viewBox="0 0 100 20" class="h-[15px] w-[75px] shrink-0 {{ colour }}" aria-hidden="true"
+     preserveAspectRatio="xMinYMid meet">
+  <g fill="currentColor">
+    {%- for slot in range(5) %}<path transform="translate({{ slot * 20 }} 0)" d="{{ star_path }}"/>{% endfor %}
+  </g>
+</svg>
+{%- endmacro %}
+
+{% macro stars(rating, count=none) -%}
+<span class="inline-flex items-center gap-1.5 leading-none">
+  <span role="img" class="relative inline-flex"
+        aria-label="{{ "%.1f" | format(rating) }} out of 5 stars{% if count is not none %}, {{ "{:,}".format(count) }} ratings{% endif %}">
+    {{ _row("text-neutral-300") }}
+    <span class="absolute inset-y-0 left-0 inline-flex overflow-hidden"
+          style="width: {{ (rating / 5 * 100) | round(2) }}%">{{ _row("text-amber-500") }}</span>
+  </span>
+  {%- if count is not none %}
+  <span class="text-amz-link" aria-hidden="true">{{ "{:,}".format(count) }}</span>
+  {%- endif %}
+</span>
+{%- endmacro %}

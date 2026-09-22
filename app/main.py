@@ -3,14 +3,14 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 
 from app.config import BASE_DIR, get_settings
-from app.db import get_engine
+from app.db import create_schema, get_engine
+from app.routers import catalog
 
 # Uvicorn configures its own loggers and leaves the root logger bare, so an application
 # log line would otherwise vanish instead of reaching the platform log. This is the
@@ -33,6 +33,11 @@ async def lifespan(_: FastAPI):
     engine = get_engine()
     with engine.connect() as connection:
         connection.execute(text("SELECT 1"))
+    # The seed creates the schema too, and in production it has already run by the time
+    # this does. This covers the other case: an app pointed at a fresh database that has
+    # never been seeded. Creating the empty tables means the landing page can say "the
+    # catalog is empty" instead of failing on a missing table. It is a no-op otherwise.
+    create_schema(engine)
     # Say where the URL came from, not just which backend won. "sqlite" alone cannot
     # distinguish "DATABASE_URL is missing" from "DATABASE_URL points at SQLite", which
     # is exactly the question to ask when a deploy looks wrong. The URL itself is never
@@ -57,26 +62,10 @@ app = FastAPI(
 )
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
-templates.env.globals["site_name"] = settings.site_name
-
-# Header controls stay visibly inert until the phase that implements them lands, so the
-# shell never shows a control that does nothing. Each flag flips in exactly one phase.
-templates.env.globals["features"] = {
-    "search": False,  # Phase 6
-    "categories": False,  # Phase 7
-    "cart": False,  # Phase 8
-    "account": False,  # Phase 11
-}
+app.include_router(catalog.router)
 
 
 @app.get("/healthz")
 async def healthz() -> JSONResponse:
     """Liveness probe for the platform health check."""
     return JSONResponse({"status": "ok"})
-
-
-@app.get("/")
-async def home(request: Request):
-    """Landing page. The catalog grid arrives in Phase 4; until then, a placeholder."""
-    return templates.TemplateResponse(request, "home.html")
