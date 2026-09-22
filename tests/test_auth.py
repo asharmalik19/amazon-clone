@@ -20,16 +20,17 @@ an error page or, far worse, somebody else's session.
 Passwords are hashed with bcrypt at its default cost, so each signup and each sign-in
 attempt costs real time on purpose. That is why the tests below share one account where
 they can rather than registering a new one per assertion.
+
+What signing in does to the *cart* is Phase 12 and lives in test_cart_merge.py. The
+helpers the two files share -- posting the three forms, reading the header greeting -- are
+in tests/auth_helpers.py.
 """
 
-import itertools
-import re
 import time
 
 import pytest
 from sqlalchemy import select
 
-from app.cart import COOKIE_NAME as CART_COOKIE
 from app.config import get_settings
 from app.db import get_sessionmaker
 from app.models import User
@@ -42,52 +43,7 @@ from app.security import (
     sign,
     verify_password,
 )
-from tests.cart_helpers import add, cart_page
-
-PASSWORD = "correct-horse-battery"
-
-# Every test writes into the same seeded database, so an address has to be unique per
-# account rather than per test file. A counter rather than a random value: a failure
-# names the account it was looking at, and the same run produces the same names.
-_addresses = itertools.count(1)
-
-
-def an_email() -> str:
-    return f"shopper{next(_addresses)}@example.com"
-
-
-def signup(client, *, name="Sam Shopper", email=None, password=PASSWORD, confirm=None):
-    """Post the create-account form the way the rendered page does."""
-    return client.post(
-        "/signup",
-        data={
-            "name": name,
-            "email": email if email is not None else an_email(),
-            "password": password,
-            "password_confirm": password if confirm is None else confirm,
-        },
-        # The success path answers with a 303; following it would hide the status under
-        # the landing page's 200, and the redirect is part of what is under test.
-        follow_redirects=False,
-    )
-
-
-def signin(client, email, password=PASSWORD):
-    return client.post(
-        "/signin", data={"email": email, "password": password}, follow_redirects=False
-    )
-
-
-def signout(client):
-    return client.post("/signout", follow_redirects=False)
-
-
-def greeting(client) -> str:
-    """What the header on the landing page says about who the shopper is."""
-    page = client.get("/").text
-    match = re.search(r"Hello, (?:sign in|([^<\n]+))", page)
-    assert match is not None, "the header said nothing at all about the account"
-    return (match.group(1) or "sign in").strip()
+from tests.auth_helpers import PASSWORD, an_email, greeting, signin, signout, signup
 
 
 def cookie_attributes(response) -> dict[str, str]:
@@ -124,20 +80,6 @@ def stored_user(email) -> User | None:
         return session.scalars(select(User).where(User.email == email)).one_or_none()
     finally:
         session.close()
-
-
-@pytest.fixture
-def account(client) -> str:
-    """An account that exists, with `client` left signed out of it.
-
-    Registered through the form rather than inserted, so the tests that sign in are
-    signing in to an account created the way a shopper creates one.
-    """
-    email = an_email()
-    assert signup(client, email=email).status_code == 303
-    signout(client)
-    client.cookies.clear()
-    return email
 
 
 @pytest.fixture(autouse=True)
@@ -208,19 +150,6 @@ def test_a_password_is_never_stored_in_the_clear(client, account):
     assert stored.password_hash.startswith("$2b$")
     assert verify_password(PASSWORD, stored.password_hash)
     assert not verify_password(PASSWORD + "x", stored.password_hash)
-
-
-def test_signing_in_does_not_disturb_the_cart(client, account, catalog):
-    """Phase 12 merges the two; until then, signing in and out leaves the cart alone."""
-    product = catalog["products"][0]
-    add(client, product["slug"])
-    cart_cookie = client.cookies[CART_COOKIE]
-
-    assert signin(client, account).status_code == 303
-    assert product["title"] in cart_page(client)
-    assert signout(client).status_code == 303
-    assert client.cookies[CART_COOKIE] == cart_cookie
-    assert product["title"] in cart_page(client)
 
 
 def test_the_header_offers_the_way_in_and_out(client, account):

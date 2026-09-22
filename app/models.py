@@ -174,10 +174,10 @@ class Cart(Base):
 
     A cart belongs either to a signed-in user or to an anonymous visitor identified by
     the opaque `session_token` in their cookie -- never to both, and never to neither.
-    `user_id` is nullable and still unwritten: Phase 11 brings accounts, and Phase 12 is
-    where signing in merges an anonymous cart into a user's. The column is here now
-    because a nullable column added with the table is cheaper than a schema change in a
-    project with no migrations.
+    Both columns are nullable because exactly one of them is set at a time: Phase 12's
+    `app.cart.merge_anonymous_cart` is what moves a cart from the second state to the
+    first, setting `user_id` and clearing `session_token` in the same breath, so no cookie
+    can still reach a cart an account now owns.
 
     Rows are created lazily, by the first add to cart. A visitor who only browses has no
     cart row and no cookie, so this table counts baskets rather than page views.
@@ -186,12 +186,14 @@ class Cart(Base):
     __tablename__ = "carts"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # Deliberately still a plain integer rather than a `ForeignKey("users.id")`, now
-    # that `users` exists. There are no migrations here: `create_all` cannot add a
-    # constraint to the `carts` table already in production, so declaring one would
-    # make the models describe a schema the deployed database does not have. Phase 12
-    # is what starts writing this column, and the one function that sets it is what
-    # keeps it pointing at a real user -- not a constraint only fresh databases get.
+    # Deliberately a plain integer rather than a `ForeignKey("users.id")`, and not
+    # unique, even though Phase 12 now writes it. There are no migrations here:
+    # `create_all` cannot add a constraint to the `carts` table already in production, so
+    # declaring one would make the models describe a schema the deployed database does
+    # not have. `app.cart.merge_anonymous_cart` is the only function that sets this
+    # column, and it is what keeps it pointing at a real user and at most one cart per
+    # account -- an invariant held by the one write path rather than by a constraint only
+    # fresh databases would get.
     user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     # The signed value in the shopper's cookie is derived from this; the signature is
     # never stored, so a leaked database row cannot be replayed as a valid cookie.

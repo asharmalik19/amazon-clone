@@ -287,11 +287,17 @@ def read_user(db: Session, request: Request) -> User | None:
     leaves no trace, and a cookie naming an account that no longer exists -- a database
     replaced under a still-valid cookie -- simply looks like a signed-out visitor rather
     than an error page.
+
+    `Session.get` rather than a `select`, because this is asked twice per page from
+    Phase 12 on: once by the header for the greeting, and once by `app.cart.read_cart` to
+    find the cart the account owns. `get` is the one lookup that answers from the
+    session's identity map, so the second caller costs no query -- and both callers get
+    the same `User` object rather than two rows that could drift apart mid-request.
     """
     user_id = read_session_user_id(request)
     if user_id is None:
         return None
-    return db.scalars(select(User).where(User.id == user_id)).one_or_none()
+    return db.get(User, user_id)
 
 
 def find_user_by_email(db: Session, email: str) -> User | None:

@@ -15,6 +15,7 @@ from app.db import create_schema, get_db, get_sessionmaker  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Base  # noqa: E402
 from seed.seed import load_catalog, seed  # noqa: E402
+from tests.auth_helpers import an_email, signout, signup  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -71,3 +72,22 @@ def empty_client(tmp_path) -> TestClient:
     finally:
         app.dependency_overrides.pop(get_db, None)
         engine.dispose()
+
+
+@pytest.fixture
+def account(client) -> str:
+    """An account that exists, with `client` left signed out of it and holding no cookies.
+
+    Registered through the form rather than inserted, so the tests that sign in are
+    signing in to an account created the way a shopper creates one. The jar is cleared
+    afterwards because signing up also signs the new shopper in -- a test that wants to
+    start as a stranger has to actually be one.
+
+    In conftest rather than in one module because both Phase 11's form tests and Phase
+    12's cart-merge tests need an account to sign in to.
+    """
+    email = an_email()
+    assert signup(client, email=email).status_code == 303
+    signout(client)
+    client.cookies.clear()
+    return email
