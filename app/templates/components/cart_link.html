@@ -12,9 +12,17 @@
   should not claim it is empty. That is the 404 page, which has no shell context.
 #}
 
+{#
+  The count sits *inside* the basket, which is the only clear space on the icon: level
+  with the top of the wheels and centred on the basket rather than the whole glyph,
+  because the handle hangs off the left and would otherwise pull the number onto the
+  stroke. Sitting on the outline is what made it unreadable -- orange digits crossing a
+  white line, at 14px.
+#}
 {% macro cart_count_badge(count, oob=false) -%}
 <span id="cart-count" {% if oob %}hx-swap-oob="true"{% endif %}
-      class="absolute left-4 top-0 min-w-4 text-center text-[14px] font-bold text-amz-cta">
+      class="absolute left-[60%] top-[42%] -translate-x-1/2 -translate-y-1/2 text-center
+             text-[13px] font-bold leading-none text-amz-cta">
   {%- if count is not none %}{{ count }}{% endif -%}
 </span>
 {%- endmacro %}
