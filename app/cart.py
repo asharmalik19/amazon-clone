@@ -6,7 +6,12 @@ one answer to "whose cart is this?" rather than one per route. The rules it enfo
 - **The cookie is signed, not trusted.** It carries an opaque token and an HMAC of that
   token, keyed by `SECRET_KEY`. A tampered, truncated or forged value is treated as no
   cookie at all -- the shopper gets a fresh empty cart instead of an error page, and
-  never someone else's basket.
+  never someone else's basket. "Any value" means any *bytes*: a cookie header is
+  arbitrary bytes decoded one-to-one into a `str`, so the signature check compares bytes
+  and there is no input that is neither a match nor a mismatch.
+- **The cookie outlives the browser.** It carries a 30-day `Max-Age`, refreshed by every
+  add, so a shopper who closes the tab and comes back finds their cart -- which is the
+  whole point of keying it to a cookie rather than to a tab.
 - **Reads never write.** `read_cart` is safe to call while rendering any page; it cannot
   create a row or set a cookie. Only `get_or_create_cart`, called from `POST /cart/add`
   alone, does that. That is what keeps a browsing visitor -- or a crawler -- out of the
@@ -15,8 +20,7 @@ one answer to "whose cart is this?" rather than one per route. The rules it enfo
 
 The signature uses `hmac` from the standard library rather than a dependency: signing a
 short opaque token is thirty lines of stdlib, and the alternative is a package in the
-image for one call. Cookie *hardening* -- the `Secure` flag, an explicit lifetime -- is
-Phase 10's, and nothing here stands in its way.
+image for one call.
 """
 
 import base64
@@ -38,6 +42,13 @@ COOKIE_NAME = "cart_session"
 # A line can exceed it by being added to repeatedly -- a shopper who adds ten twice
 # wants twenty, and refusing the second add would be a rule invented to be enforced.
 MAX_ADD_QUANTITY = 10
+
+# How long an untouched cart stays findable. Long enough that "I'll come back to it
+# later" is true, short enough that a shared machine does not hand the next person a
+# basket months after the fact. Every add pushes it out again, so the window is thirty
+# days of *inactivity*, not thirty days of existence.
+COOKIE_MAX_AGE_DAYS = 30
+COOKIE_MAX_AGE = COOKIE_MAX_AGE_DAYS * 24 * 60 * 60
 
 _SEPARATOR = "."
 
@@ -70,12 +81,21 @@ def read_token(request: Request) -> str | None:
     `compare_digest` rather than `==`: the comparison is against attacker-supplied text,
     and a timing difference is the one thing that would make forging a signature easier
     than guessing it.
+
+    The comparison is over **bytes**. `compare_digest` raises `TypeError` on a `str`
+    holding anything outside ASCII, and a `Cookie` header is arbitrary bytes that
+    Starlette decodes character-for-character -- so one high byte in the signature would
+    otherwise be a 500 on a request anyone can send with `curl`. Encoding both sides
+    keeps the comparison constant-time and makes the reject path total: there is no
+    cookie value that is neither a match nor a mismatch.
     """
     value = request.cookies.get(COOKIE_NAME)
     if not value or _SEPARATOR not in value:
         return None
     token, _, signature = value.rpartition(_SEPARATOR)
-    if not token or not hmac.compare_digest(signature, _signature(token)):
+    if not token:
+        return None
+    if not hmac.compare_digest(signature.encode("utf-8"), _signature(token).encode("ascii")):
         return None
     return token
 
@@ -117,23 +137,23 @@ def read_cart(db: Session, request: Request) -> Cart | None:
     return db.scalars(_cart_query().where(Cart.session_token == token)).one_or_none()
 
 
-def get_or_create_cart(db: Session, request: Request) -> tuple[Cart, str | None]:
-    """The shopper's cart, creating one if they have none.
+def get_or_create_cart(db: Session, request: Request) -> tuple[Cart, str]:
+    """The shopper's cart, creating one if they have none, and the token it is found by.
 
-    Returns the cart and, when a new one was made, the token whose cookie the caller
-    must set with `set_cart_cookie`. The token is handed back rather than written here
-    because only the route holds the response -- and the cookie must not be set unless
-    the write it belongs to actually succeeds.
+    The token comes back whether or not the cart is new, because the caller sets the
+    cookie either way: re-sending it is what pushes `COOKIE_MAX_AGE` out again, so a
+    cart in weekly use never expires while a forgotten one does. It is handed back
+    rather than written here because only the route holds the response -- and the cookie
+    must not be set unless the write it belongs to actually succeeds.
 
     A token that verifies but names no row -- a cart deleted by a later phase's merge,
     or a database replaced under a still-valid cookie -- issues a new cart under a new
-    token instead of failing. Phase 10 tests that case as a first-class state; it is
-    handled here from the start because "your cookie is stale" is not a sentence a
-    shopper should ever have to read.
+    token instead of failing. "Your cookie is stale" is not a sentence a shopper should
+    ever have to read.
     """
     cart = read_cart(db, request)
     if cart is not None:
-        return cart, None
+        return cart, cart.session_token
 
     token = new_token()
     cart = Cart(session_token=token)
@@ -146,14 +166,23 @@ def set_cart_cookie(response: Response, token: str) -> None:
 
     `httponly` because no script needs to read it and a stolen token is a stolen cart.
     `samesite="lax"` so the cookie still travels when a shopper follows a link in from
-    somewhere else, but not on a cross-site POST. The `Secure` flag and an explicit
-    lifetime are Phase 10's; until then this is a session cookie, which is enough to
-    survive the navigation and refresh Phase 8 promises.
+    somewhere else, but not on a cross-site POST.
+
+    `max_age` is what makes a cart survive the tab being closed: without it the browser
+    keeps the cookie only for the session, and "come back tomorrow and your cart is
+    there" is false. With it, the cart outlives the browser but not the month.
+
+    `secure` comes from the settings rather than from the request, for the reason
+    `Settings.cookie_secure` explains. It has to be conditional either way: a `Secure`
+    cookie on a local HTTP server is dropped by the browser silently, which looks
+    exactly like a cart that does not work and leaves nothing in the log.
     """
     response.set_cookie(
         COOKIE_NAME,
         sign_token(token),
+        max_age=COOKIE_MAX_AGE,
         httponly=True,
+        secure=get_settings().cookie_secure,
         samesite="lax",
         path="/",
     )

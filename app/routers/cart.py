@@ -6,7 +6,9 @@ Four routes, and the split between them is the point.
 clicks the header link before adding anything sees the empty state and leaves no trace.
 
 `POST /cart/add` is the only write that may bring a cart into existence, so it is the
-only place a `Cart` row and a cookie are created. `POST /cart/update` and
+only place a `Cart` row and a cookie are written -- created on the first add, and
+re-sent by every add after it so the cart's expiry follows the shopper's use of it
+rather than the day they started. `POST /cart/update` and
 `POST /cart/remove` edit a cart that already exists and never create one: an edit to a
 cart nobody has is an edit to nothing, and answering it by creating an empty cart would
 fill the table with rows for requests that changed nothing.
@@ -126,7 +128,7 @@ async def add(
             detail=f"Choose a quantity between 1 and {MAX_ADD_QUANTITY}.",
         )
 
-    cart, new_token = get_or_create_cart(db, request)
+    cart, token = get_or_create_cart(db, request)
     item = add_to_cart(db, cart, product, parsed)
     # The dependency never commits, so the write is committed here, where it is visible.
     db.commit()
@@ -142,10 +144,12 @@ async def add(
         # refreshes the cart page afterwards is not re-posting the add.
         response = RedirectResponse("/cart", status_code=303)
 
-    if new_token is not None:
-        # Only now, after the commit: a cookie naming a cart that was never written
-        # would send the shopper back with a token that resolves to nothing.
-        set_cart_cookie(response, new_token)
+    # Every add sets the cookie, not only the one that created the cart: re-sending it
+    # pushes its expiry out, so a cart someone keeps using never quietly ages out while
+    # a forgotten one still does. Only now, after the commit -- a cookie naming a cart
+    # that was never written would send the shopper back with a token resolving to
+    # nothing.
+    set_cart_cookie(response, token)
     return response
 
 

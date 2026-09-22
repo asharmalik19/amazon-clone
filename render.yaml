@@ -33,3 +33,10 @@ services:
       # which is the intended behaviour.
       - key: SECRET_KEY
         generateValue: true
+      # The cart cookie is sent `Secure` here. Declared rather than inferred: the app
+      # falls back to inferring it from SECRET_KEY being set, but a security flag is
+      # worth being able to read off the blueprint. It is deliberately *not* set
+      # locally -- a `Secure` cookie over plain HTTP is dropped by the browser, and a
+      # cart that silently does not work is worse than one that is not hardened.
+      - key: COOKIE_SECURE
+        value: "true"

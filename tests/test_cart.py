@@ -238,11 +238,17 @@ def test_adding_issues_one_signed_httponly_cookie(client, product):
     assert sign_token(token) == value
 
 
-def test_a_second_add_reuses_the_cookie_it_already_set(client, product):
+def test_a_second_add_reuses_the_token_it_already_issued(client, product):
+    """One shopper, one cart: a second add must not mint a second token.
+
+    Phase 8 asserted that the second add sent no cookie at all. Phase 10 re-sends it to
+    refresh the expiry (see tests/test_cart_persistence.py), so what is guarded here is
+    the part that never changes -- the token, and therefore the cart, is the same one.
+    """
     add(client, product["slug"])
     first = client.cookies[COOKIE_NAME]
     second = add(client, product["slug"])
-    assert "set-cookie" not in second.headers
+    assert second.headers["set-cookie"].startswith(f"{COOKIE_NAME}={first}")
     assert client.cookies[COOKIE_NAME] == first
 
 

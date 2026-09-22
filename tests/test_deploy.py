@@ -89,6 +89,13 @@ def test_healthz_is_what_the_blueprint_polls():
     assert "healthCheckPath: /healthz" in blueprint
 
 
+def test_the_blueprint_declares_a_secure_cart_cookie():
+    """The app would infer it from SECRET_KEY, but a security flag should be readable."""
+    blueprint = (REPO_ROOT / "render.yaml").read_text()
+    assert "COOKIE_SECURE" in blueprint
+    assert 'value: "true"' in blueprint
+
+
 def test_blueprint_takes_the_database_url_from_the_managed_database():
     blueprint = (REPO_ROOT / "render.yaml").read_text()
     assert "fromDatabase:" in blueprint

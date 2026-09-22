@@ -170,7 +170,10 @@ def test_removing_the_last_line_keeps_the_cart_usable(client, product):
     remove(client, product["slug"])
 
     response = add(client, product["slug"], 2)
-    assert "set-cookie" not in response.headers
+    # The same cookie back, not a new one: emptying a cart does not abandon it. Phase 10
+    # re-sends it on every add to refresh the expiry, so the value is what is asserted
+    # here rather than the absence of the header.
+    assert response.headers["set-cookie"].startswith(f"{COOKIE_NAME}={cookie};")
     assert client.cookies[COOKIE_NAME] == cookie
     assert quantity_of(cart_page(client), product["slug"]) == 2
 
